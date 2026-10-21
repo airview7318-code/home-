@@ -13,11 +13,13 @@
 !insights.css
 !reference.css
 !refinement.css
+!services.css
 !geo-content.css
 !app.js
 !property.js
 !admin.js
 !insights.js
+!services.js
 !robots.txt
 !sitemap.xml
 !config.js
@@ -30,3 +32,5 @@
 !profile-yun-minuk.png
 !buja-logo.svg
 !favicon.png
+!api/
+!api/**
