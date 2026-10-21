@@ -180,3 +180,15 @@ footer>small{font-size:10px}
 @media(max-width:760px){.commercial-area-finder{grid-template-columns:1fr;padding:18px;gap:15px}.commercial-area-links{grid-template-columns:repeat(2,minmax(0,1fr))}.commercial-area-finder>small{grid-column:1}}
 @media(max-width:420px){.commercial-area-copy h3{font-size:18px}.commercial-area-links a{padding:0 9px;font-size:12px}.commercial-area-links a span{font-size:10px}}
 
+
+/* Naver blog posts displayed alongside live listings */
+.blog-property-card{display:block;color:inherit;text-decoration:none;border:1px solid #e9e6df;background:#fff;transition:transform .2s,box-shadow .2s}
+.blog-property-card:hover{transform:translateY(-4px);box-shadow:0 14px 34px #10243a18}
+.blog-property-card:focus-visible{outline:2px solid #b4955d;outline-offset:3px}
+.blog-property-card .property-image{isolation:isolate}
+.blog-property-card .property-image img{transition:transform .3s}
+.blog-property-card:hover .property-image img{transform:scale(1.04)}
+.blog-card-mark{position:absolute;inset:auto 0 0;padding:30px 16px 14px;background:linear-gradient(transparent,#10243ad9);color:#fff;font:10px 'DM Sans',sans-serif;letter-spacing:.14em}
+.blog-property-card .featured-listing-note{min-height:38px}
+.blog-property-card .property-detail-link{display:inline-block;margin-top:14px;color:#172b40;font-size:12px;font-weight:600}
+@media(max-width:600px){.blog-property-card .property-info{padding:13px}.blog-property-card .property-image{height:145px}.blog-property-card .property-info h3{font-size:13px;line-height:1.5}.blog-property-card .featured-listing-note{font-size:10px;min-height:0}}
