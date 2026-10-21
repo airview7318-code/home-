@@ -50,6 +50,7 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </div>
 <nav class="admin-tabs">
 <button class="admin-tab active" data-panel="properties-panel">매물 관리</button>
+<button class="admin-tab" data-panel="developments-panel">신규 분양 관리</button>
 <button class="admin-tab" data-panel="inquiries-panel">문의 관리</button>
 <button class="admin-tab" data-panel="posts-panel">게시글 관리</button>
 <button class="admin-tab" data-panel="blog-import-panel">네이버 글 가져오기</button>
@@ -154,6 +155,28 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </table>
 </div>
 </section>
+</section>
+<section class="admin-panel" id="developments-panel" hidden>
+<section class="admin-card">
+<h2 id="development-form-title">신규 분양 정보 등록</h2>
+<form id="development-form" class="admin-grid"><input type="hidden" name="id">
+<label>사업명<input name="title" required maxlength="160"></label>
+<label>분양 유형<select name="category"><option>신규 분양 상가</option><option>신규 분양 아파트</option><option>신규 분양 오피스텔</option><option>기타 분양</option></select></label>
+<label>진행 상태<select name="status"><option>분양 예정</option><option>분양 중</option><option>잔여 호실 분양</option><option>분양 완료</option><option>비공개</option></select></label>
+<label>소재지<input name="location" placeholder="확인된 주소 또는 지역"></label>
+<label>공급 규모<input name="supply_scale" placeholder="확인된 정보만 입력"></label>
+<label>분양 면적<input name="area_info" placeholder="확인된 정보만 입력"></label>
+<label>분양 가격<input name="price_info" placeholder="미확인 시 비워 두세요"></label>
+<label>분양 일정<input name="schedule" placeholder="공식 확인된 일정만 입력"></label>
+<label>대표 이미지 주소<input name="image_url" type="url"></label>
+<label>관련 자료 주소<input name="source_url" type="url" placeholder="네이버 블로그 등 출처"></label>
+<label class="wide">입지 및 사업 개요<textarea name="description" rows="5" placeholder="검증된 안내 내용"></textarea></label>
+<label class="wide check-line"><input type="checkbox" name="is_public"> 홈페이지에 공개 (분양 정보 확인 후 공개하세요)</label>
+<div class="wide admin-actions"><button class="btn btn-dark">분양 정보 저장</button><button type="button" id="reset-development" class="btn btn-light">새 분양 정보</button><span id="development-message" class="admin-status"></span></div>
+</form>
+<p class="admin-help">가격·일정·공급 규모는 공식 자료로 확인한 뒤 입력하세요. 공개하지 않은 정보와 ‘비공개’ 상태는 방문자 페이지에 표시되지 않습니다.</p>
+</section>
+<section class="admin-card"><h2>등록된 신규 분양</h2><div style="overflow:auto"><table class="admin-table"><thead><tr><th>사업명</th><th>유형</th><th>상태</th><th>공개</th><th>관리</th></tr></thead><tbody id="admin-developments"></tbody></table></div></section>
 </section>
 <section class="admin-panel" id="inquiries-panel" hidden>
 <section class="admin-card">
@@ -271,4 +294,3 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </script>
 </body>
 </html>
-
