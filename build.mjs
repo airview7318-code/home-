@@ -2,7 +2,7 @@ import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
-for (const file of ['index.html','admin.html','privacy.html','property.html','geomdan-commercial-guide.html','geomdan-land-officetel-guide.html','geomdan-apartment-guide.html','styles.css','insights.css','reference.css','refinement.css','geo-content.css','app.js','property.js','admin.js','insights.js','robots.txt','sitemap.xml','favicon.png']) await cp(file, `dist/${file}`);
+for (const file of ['index.html','admin.html','privacy.html','property.html','geomdan-commercial-guide.html','geomdan-commercial-case-study.html','geomdan-land-officetel-guide.html','geomdan-apartment-guide.html','styles.css','insights.css','reference.css','refinement.css','geo-content.css','app.js','property.js','admin.js','insights.js','robots.txt','sitemap.xml','favicon.png']) await cp(file, `dist/${file}`);
 if (existsSync('assets')) await cp('assets','dist/assets',{recursive:true});
 if (existsSync('config.js')) await cp('config.js','dist/config.js');
 // Add public listing detail URLs to the sitemap at build time when the public view is reachable.
