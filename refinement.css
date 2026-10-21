@@ -192,3 +192,11 @@ footer>small{font-size:10px}
 .blog-property-card .featured-listing-note{min-height:38px}
 .blog-property-card .property-detail-link{display:inline-block;margin-top:14px;color:#172b40;font-size:12px;font-weight:600}
 @media(max-width:600px){.blog-property-card .property-info{padding:13px}.blog-property-card .property-image{height:145px}.blog-property-card .property-info h3{font-size:13px;line-height:1.5}.blog-property-card .featured-listing-note{font-size:10px;min-height:0}}
+
+
+/* Commercial review card without external map shortcuts */
+.commercial-area-points{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:9px 18px;color:#33485c;font-size:13px;line-height:1.5}.commercial-area-points span{display:flex;align-items:center;gap:8px}.commercial-area-points b{color:#a78953;font-size:11px;letter-spacing:.08em}
+@media(max-width:760px){.commercial-area-points{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.commercial-area-copy h3{font-size:18px}.commercial-area-points{grid-template-columns:1fr;font-size:12px}}
+.tool-grid>.calculator-card:only-child{grid-column:1/-1}
+.fee-vat-note{margin-top:-4px;padding:10px 12px;border-left:2px solid #b99b64;background:#f8f6f1;color:#65717d}

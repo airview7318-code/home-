@@ -20,33 +20,9 @@
         [rate,cap]=table.find(([limit])=>amount<limit).slice(1);label=`상한 ${Number((rate*100).toFixed(2))}%`;
       }else if(kind==='officetel'){rate=isLease ? 0.004 : 0.005;label=`상한 ${rate*100}%`}
       else{rate=.009;label='협의 상한 0.9% 이내'}
-      const ceiling=Math.min(amount*rate,cap),vat=byId('fee-vat').checked?ceiling*.1:0;
+      const ceiling=Math.min(amount*rate,cap),vat=ceiling*.1;
       const formatMoney=value=>won(value);
-      byId('fee-result').innerHTML=`<strong>${formatMoney(ceiling+vat)}</strong><span>1인 기준 중개보수 상한 ${formatMoney(ceiling)} · ${label}${vat?` · 부가세 가정 ${formatMoney(vat)}`:''}</span><small>거래금액 기준 ${formatMoney(amount)} · 실제 보수는 상한 이내에서 협의합니다.</small>`;
-    });
-  }
-
-  const taxType=byId('tax-type');
-  if(taxType){
-    taxType.addEventListener('change',()=>{byId('tax-one-home-row').hidden=taxType.value!=='home';byId('tax-land-row').hidden=taxType.value!=='land';});
-    byId('tax-calc').addEventListener('click',()=>{
-      const assessed=Number(byId('tax-value').value||0)*10000;
-      if(!assessed||assessed<0){byId('tax-result').textContent='공시가격 또는 시가표준액을 입력해 주세요.';return;}
-      let ratio=.7,base,tax=0;
-      if(taxType.value==='home'){
-        const oneHome=byId('tax-one-home').checked&&assessed<=900000000;
-        ratio=oneHome?(assessed<=300000000 ? .43 : assessed<=600000000 ? .44 : .45):.6;
-        base=assessed*ratio;
-        if(oneHome)tax=base<=60000000?base*.0005:base<=150000000?30000+(base-60000000)*.001:base<=300000000?120000+(base-150000000)*.002:420000+(base-300000000)*.0035;
-        else tax=base<=60000000?base*.001:base<=150000000?60000+(base-60000000)*.0015:base<=300000000?195000+(base-150000000)*.0025:570000+(base-300000000)*.004;
-      }else{
-        base=assessed*.7;
-        if(taxType.value==='building')tax=base*.0025;
-        else if(byId('tax-land-type').value==='general')tax=base<=50000000?base*.002:base<=100000000?100000+(base-50000000)*.003:250000+(base-100000000)*.005;
-        else tax=base<=200000000?base*.002:base<=1000000000?400000+(base-200000000)*.003:2800000+(base-1000000000)*.004;
-      }
-      const education=tax*.2,urban=byId('tax-urban').checked?base*.0014:0,total=tax+education+urban;
-      byId('tax-result').innerHTML=`<strong>${won(total)}</strong><span>재산세 본세 ${won(tax)} · 지방교육세 약 ${won(education)} · 도시지역분 ${won(urban)}</span><small>과세표준 ${won(base)} · 시가표준액 적용 비율 ${(ratio*100).toFixed(0)}%</small>`;
+      byId('fee-result').innerHTML=`<strong>${formatMoney(ceiling+vat)}</strong><span>1인 기준 중개보수 상한 ${formatMoney(ceiling)} · ${label} · 부가세 10% 추정 ${formatMoney(vat)}</span><small>거래금액 기준 ${formatMoney(amount)} · 실제 보수는 상한 이내에서 협의합니다.</small>`;
     });
   }
 
