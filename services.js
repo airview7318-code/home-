@@ -62,8 +62,17 @@
       if(/대출|금리|이자/.test(q))return '대출 한도와 금리는 소득·신용·담보평가·금융기관 정책에 따라 달라져요. 이 도우미는 대출 승인을 확정하거나 금융상품을 추천하지 않습니다. 은행에 최신 조건을 확인하고 필요하면 매물 조건을 함께 정리해 드릴게요.';
       return '원하는 지역, 부동산 종류, 예산, 매입·임대 목적을 알려주시면 확인할 항목을 정리해 드릴게요. 복잡한 권리·세금·법률 판단은 공인중개사 또는 해당 전문가와 확인해 주세요.';
     };
-    const addMessage=(text,role)=>{const p=document.createElement('p');p.className=`advisor-message ${role}`;p.textContent=text;log.append(p);log.scrollTop=log.scrollHeight;};
-    chat.addEventListener('submit',event=>{event.preventDefault();const input=byId('advisor-question'),question=input.value.trim();if(!question)return;addMessage(question,'user');addMessage(answerFor(question),'assistant');input.value='';});
+    const addMessage=(text,role)=>{const p=document.createElement('p');p.className=`advisor-message ${role}`;p.textContent=text;log.append(p);log.scrollTop=log.scrollHeight;return p;};
+    chat.addEventListener('submit',async event=>{event.preventDefault();const input=byId('advisor-question'),submit=chat.querySelector('button[type="submit"]'),question=input.value.trim();if(!question||submit.disabled)return;addMessage(question,'user');input.value='';submit.disabled=true;submit.textContent='답변 작성 중…';const pending=addMessage('질문을 확인하고 있습니다.','assistant');
+      try{
+        const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question}),signal:AbortSignal.timeout(25000)});
+        const data=await response.json();
+        if(!response.ok)throw new Error(data.error||'답변을 불러오지 못했습니다.');
+        pending.textContent=data.answer;
+      }catch{
+        pending.textContent=`AI 연결을 사용할 수 없어 기본 안내로 답변드립니다. ${answerFor(question)}`;
+      }finally{submit.disabled=false;submit.textContent='질문하기';log.scrollTop=log.scrollHeight;}
+    });
     document.querySelectorAll('[data-advisor-prompt]').forEach(button=>button.addEventListener('click',()=>{byId('advisor-question').value=button.dataset.advisorPrompt;chat.requestSubmit();}));
   }
 
