@@ -8,11 +8,14 @@
 @media(max-width:850px){.hero{grid-template-rows:auto clamp(280px,65vw,360px)}.hero-visual{grid-row:2}.hero-actions{align-items:stretch}.hero-social-links{min-width:0}}
 @media(max-width:380px){.hero-copy{padding-right:18px;padding-left:18px}.hero-actions .btn{white-space:normal;line-height:1.4;padding:8px;min-height:52px}.hero-actions .btn span{white-space:normal}.trust-strip{padding-right:18px;padding-left:18px}}
 
-.featured-commercial-visual{display:grid;place-items:center;text-align:center;color:#fff;background:radial-gradient(circle at 82% 22%,#c5a56b55 0 13%,transparent 13.5%),linear-gradient(135deg,#12243a,#263c54)}
-.featured-commercial-visual>div{display:grid;gap:8px;padding:25px}
-.featured-commercial-visual small{font:9px 'DM Sans',sans-serif;letter-spacing:.18em;color:#dfc99d}
-.featured-commercial-visual strong{font-size:24px;font-weight:500;letter-spacing:-.04em}
-.featured-commercial-visual>div>span{font-size:12px;color:#d3dce4}
-.featured-listing-note{margin:12px 0 0;color:#7e858c;font-size:10px;line-height:1.65}
-.featured-property{cursor:default}
-.featured-property:hover{transform:none}
+.featured-commercial-visual{display:block;background:#12243a}
+.featured-commercial-visual>img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.8);transition:transform .3s}
+.featured-commercial-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 24%,rgba(10,24,39,.76))}
+.featured-visual-title{position:absolute;z-index:1;left:20px;right:16px;bottom:18px;display:grid;gap:5px;color:#fff}
+.featured-visual-title small{font:9px 'DM Sans',sans-serif;letter-spacing:.18em;color:#e4c78e}
+.featured-visual-title strong{font-size:23px;font-weight:500;letter-spacing:-.04em}
+.featured-visual-title>span{font-size:11px;color:#e1e5e7}
+.featured-listing-note{margin:12px 0 0;color:#7e858c;font-size:11px;line-height:1.65}
+.featured-property{display:block;color:inherit;text-decoration:none}
+.featured-property:hover .property-image>img{transform:scale(1.04)}
+.featured-property .property-detail-link{text-decoration:none;border-bottom:1px solid #c6b38f;padding-bottom:3px}
