@@ -24,6 +24,15 @@ create table if not exists public.blog_posts (
   seo_title text, seo_description text, source_url text, is_published boolean not null default false,
   published_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
+create table if not exists public.developments (
+  id uuid primary key default gen_random_uuid(), title text not null,
+  category text not null check (category in ('신규 분양 상가','신규 분양 아파트','신규 분양 오피스텔','기타 분양')),
+  status text not null default '분양 예정' check (status in ('분양 예정','분양 중','잔여 호실 분양','분양 완료','비공개')),
+  location text, supply_scale text, area_info text, price_info text, schedule text,
+  image_url text, source_url text, description text,
+  is_public boolean not null default false,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
 create table if not exists public.clients (
   id uuid primary key default gen_random_uuid(), name text not null, phone text,
   client_type text, source text, desired_conditions jsonb not null default '{}',
@@ -43,6 +52,7 @@ alter table public.inquiries enable row level security;
 alter table public.clients enable row level security;
 alter table public.consultations enable row level security;
 alter table public.blog_posts enable row level security;
+alter table public.developments enable row level security;
 drop policy if exists "admins manage properties" on public.properties;
 create policy "admins manage properties" on public.properties for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
 drop policy if exists "visitors read public properties" on public.properties;
@@ -61,6 +71,15 @@ create or replace view public.blog_posts_public with (security_barrier=true, sec
  select id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,published_at,created_at,updated_at,source_url
  from public.blog_posts where is_published=true and published_at is not null and published_at<=now();
 grant select on public.blog_posts_public to anon, authenticated;
+drop policy if exists "admins manage developments" on public.developments;
+create policy "admins manage developments" on public.developments for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
+drop policy if exists "visitors read public developments" on public.developments;
+create policy "visitors read public developments" on public.developments for select to anon, authenticated using (is_public=true and status <> '비공개');
+create or replace view public.developments_public with (security_barrier=true, security_invoker=true) as
+ select id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,created_at,updated_at
+ from public.developments where is_public=true and status <> '비공개';
+grant select on public.developments_public to anon, authenticated;
+grant select(id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description) on public.developments to anon;
 drop policy if exists "visitors submit inquiries" on public.inquiries;
 create policy "visitors submit inquiries" on public.inquiries for insert to anon, authenticated with check (consent=true and status='신규 접수' and admin_note is null and length(name) between 1 and 80 and length(phone) between 7 and 30);
 drop policy if exists "admins read and manage inquiries" on public.inquiries;
@@ -78,6 +97,7 @@ grant insert on public.inquiries to anon, authenticated;
 grant select, update, delete on public.inquiries to authenticated;
 grant select, insert, update, delete on public.clients, public.consultations to authenticated;
 grant select, insert, update, delete on public.blog_posts to authenticated;
+grant select, insert, update, delete on public.developments to authenticated;
 revoke insert on public.inquiries from anon, authenticated;
 grant insert(request_type,name,phone,property_type,area,details,consent) on public.inquiries to anon, authenticated;
 create index if not exists properties_public_created_idx on public.properties(is_public,status,created_at desc);
@@ -85,6 +105,7 @@ create index if not exists inquiries_created_idx on public.inquiries(created_at 
 create index if not exists blog_posts_published_idx on public.blog_posts(is_published,published_at desc);
 create unique index if not exists properties_naver_post_id_uidx on public.properties(naver_post_id) where naver_post_id is not null;
 create unique index if not exists blog_posts_source_url_uidx on public.blog_posts(source_url) where source_url is not null;
+create index if not exists developments_public_updated_idx on public.developments(is_public,status,updated_at desc);
 
 create or replace function public.touch_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at=now(); return new; end $$;
@@ -92,6 +113,8 @@ drop trigger if exists properties_touch_updated on public.properties;
 create trigger properties_touch_updated before update on public.properties for each row execute function public.touch_updated_at();
 drop trigger if exists blog_posts_touch_updated on public.blog_posts;
 create trigger blog_posts_touch_updated before update on public.blog_posts for each row execute function public.touch_updated_at();
+drop trigger if exists developments_touch_updated on public.developments;
+create trigger developments_touch_updated before update on public.developments for each row execute function public.touch_updated_at();
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('buja-media','buja-media',true,8388608,array['image/jpeg','image/png','image/webp','image/gif'])
@@ -104,4 +127,3 @@ drop policy if exists "admins update buja media" on storage.objects;
 create policy "admins update buja media" on storage.objects for update to authenticated using(bucket_id='buja-media' and public.is_buja_admin()) with check(bucket_id='buja-media' and public.is_buja_admin());
 drop policy if exists "admins delete buja media" on storage.objects;
 create policy "admins delete buja media" on storage.objects for delete to authenticated using(bucket_id='buja-media' and public.is_buja_admin());
-
