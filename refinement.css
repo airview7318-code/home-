@@ -168,3 +168,9 @@ footer>small{font-size:10px}
   .section-heading p,.market-copy>p{font-size:15px;line-height:1.85}
   .market-analysis-inner{padding-left:20px;padding-right:20px}
 }
+
+.footer-guide-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin:24px 0 14px;padding:20px 0;border-top:1px solid #263548;border-bottom:1px solid #263548}
+.footer-guide-groups section{display:grid;align-content:start;gap:8px}
+.footer-guide-groups section>b{color:#e0c58c;font-size:12px;font-weight:600;margin-bottom:2px}
+.footer-guide-groups section>a{color:#a5b0b9;font-size:11px;line-height:1.7}
+@media(max-width:600px){.footer-guide-groups{grid-template-columns:1fr;gap:16px}.footer-guide-groups section{gap:5px}}
