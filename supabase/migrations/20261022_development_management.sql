@@ -25,13 +25,12 @@ drop policy if exists "visitors read public developments" on public.developments
 create policy "visitors read public developments" on public.developments for select to anon, authenticated
   using (is_public=true and status <> '비공개');
 
-create or replace view public.developments_public with (security_barrier=true, security_invoker=true) as
+create or replace view public.developments_public with (security_barrier=true) as
   select id,title,category,status,location,supply_scale,area_info,price_info,schedule,
          image_url,source_url,description,created_at,updated_at
   from public.developments where is_public=true and status <> '비공개';
 grant select on public.developments_public to anon, authenticated;
 revoke all on public.developments from anon;
-grant select(id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,created_at,updated_at) on public.developments to anon;
 grant select(id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,is_public,created_at,updated_at) on public.developments to authenticated;
 grant insert(title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,is_public) on public.developments to authenticated;
 grant update(title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,is_public) on public.developments to authenticated;
