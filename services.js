@@ -26,32 +26,6 @@
     });
   }
 
-  const chat=byId('advisor-form'),log=byId('advisor-log');
-  if(chat&&log){
-    const answerFor=question=>{
-      const q=question.replace(/\s/g,'').toLowerCase();
-      if(/중개보수|복비|수수료/.test(q))return '매매·전월세·상가·토지·오피스텔에 따라 상한요율이 달라요. 위 중개보수 계산기에서 거래 유형과 금액을 넣으면 1인 기준 상한을 볼 수 있습니다. 최종 보수는 상한 안에서 협의합니다.';
-      if(/재산세|보유세|세금/.test(q))return '재산세는 매년 6월 1일 현재 소유자와 공시가격·시가표준액, 과세 구분에 따라 달라집니다. 위 재산세 계산기는 기본 세율로 추정하므로 고지액은 위택스나 관할 구청에서 확인해 주세요.';
-      if(/상가|점포|창업|공실/.test(q))return '상가는 유동인구만 보기보다 배후세대, 업종 구성, 전면·가시성, 주차, 관리비, 렌트프리와 공실 기간을 같이 확인하는 게 좋습니다. 희망 업종·예산·면적을 알려주시면 상담 요청으로 남겨 주세요.';
-      if(/토지|건축|용도/.test(q))return '토지는 지목만으로 건축 가능 여부를 판단하기 어렵습니다. 용도지역·지구단위계획, 도로 접면, 건폐율·용적률, 기반시설과 필지 조건을 함께 확인해야 합니다. 블로그 토지 글이나 상담으로 필지별 확인을 권해요.';
-      if(/오피스텔|사무실|업무/.test(q))return '오피스텔은 주거용/업무용 실제 사용, 전용면적·관리비·주차·전입 가능 여부를 확인해 주세요. 사무실은 업종 인허가, 전력·냉난방, 원상복구 범위와 관리비 포함 항목도 계약 전에 살펴야 합니다.';
-      if(/대출|금리|이자/.test(q))return '대출 한도와 금리는 소득·신용·담보평가·금융기관 정책에 따라 달라져요. 이 도우미는 대출 승인을 확정하거나 금융상품을 추천하지 않습니다. 은행에 최신 조건을 확인하고 필요하면 매물 조건을 함께 정리해 드릴게요.';
-      return '원하는 지역, 부동산 종류, 예산, 매입·임대 목적을 알려주시면 확인할 항목을 정리해 드릴게요. 복잡한 권리·세금·법률 판단은 공인중개사 또는 해당 전문가와 확인해 주세요.';
-    };
-    const addMessage=(text,role)=>{const p=document.createElement('p');p.className=`advisor-message ${role}`;p.textContent=text;log.append(p);log.scrollTop=log.scrollHeight;return p;};
-    chat.addEventListener('submit',async event=>{event.preventDefault();const input=byId('advisor-question'),submit=chat.querySelector('button[type="submit"]'),question=input.value.trim();if(!question||submit.disabled)return;addMessage(question,'user');input.value='';submit.disabled=true;submit.textContent='답변 작성 중…';const pending=addMessage('질문을 확인하고 있습니다.','assistant');
-      try{
-        const response=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question}),signal:AbortSignal.timeout(25000)});
-        const data=await response.json();
-        if(!response.ok)throw new Error(data.error||'답변을 불러오지 못했습니다.');
-        pending.textContent=data.answer;
-      }catch{
-        pending.textContent=`AI 연결을 사용할 수 없어 기본 안내로 답변드립니다. ${answerFor(question)}`;
-      }finally{submit.disabled=false;submit.textContent='질문하기';log.scrollTop=log.scrollHeight;}
-    });
-    document.querySelectorAll('[data-advisor-prompt]').forEach(button=>button.addEventListener('click',()=>{byId('advisor-question').value=button.dataset.advisorPrompt;chat.requestSubmit();}));
-  }
-
   const faqContent={
     '관리비':['관리비 고지서의 총액뿐 아니라 포함 항목과 별도 사용료를 구분해 확인하세요.','공용관리비·전기·수도·냉난방·주차·인터넷의 포함 여부와 최근 계절별 변동 내역을 확인합니다.','상가라면 공용관리비 산정 기준, 부가세, 공실 시 부담 주체도 계약서와 관리규약에 따라 확인하세요.'],
     '상권':['상권은 시간대·요일별 유동 흐름과 실제 이용 목적을 함께 살펴보는 게 좋습니다.','배후 주거·학교·업무시설, 업종 구성, 경쟁 점포, 접근성, 주차와 가시성을 현장에서 확인하세요.','상가의 실제 매출이나 유동인구를 보장하는 자료는 아니며, 업종 인허가 및 임대 조건은 별도로 확인해야 합니다.'],
@@ -75,3 +49,4 @@
     faqDialog.addEventListener('click',event=>{if(event.target===faqDialog)faqDialog.close()});
   }
 })();
+
