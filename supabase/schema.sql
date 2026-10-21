@@ -75,11 +75,10 @@ drop policy if exists "admins manage developments" on public.developments;
 create policy "admins manage developments" on public.developments for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
 drop policy if exists "visitors read public developments" on public.developments;
 create policy "visitors read public developments" on public.developments for select to anon, authenticated using (is_public=true and status <> '비공개');
-create or replace view public.developments_public with (security_barrier=true, security_invoker=true) as
+create or replace view public.developments_public with (security_barrier=true) as
  select id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,created_at,updated_at
  from public.developments where is_public=true and status <> '비공개';
 grant select on public.developments_public to anon, authenticated;
-grant select(id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description) on public.developments to anon;
 drop policy if exists "visitors submit inquiries" on public.inquiries;
 create policy "visitors submit inquiries" on public.inquiries for insert to anon, authenticated with check (consent=true and status='신규 접수' and admin_note is null and length(name) between 1 and 80 and length(phone) between 7 and 30);
 drop policy if exists "admins read and manage inquiries" on public.inquiries;
