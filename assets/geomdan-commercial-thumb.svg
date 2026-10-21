@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">검단신도시 상가 건축 일러스트</title>
+  <desc id="desc">따뜻한 저녁빛이 비치는 현대적인 상업 건물 일러스트</desc>
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#e8e2d6"/><stop offset="1" stop-color="#b5c0bd"/></linearGradient>
+    <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#344c61"/><stop offset=".55" stop-color="#152b40"/><stop offset="1" stop-color="#0d1c2c"/></linearGradient>
+    <linearGradient id="sun" x2="0" y2="1"><stop stop-color="#ecd09a"/><stop offset="1" stop-color="#cfaa6c"/></linearGradient>
+    <linearGradient id="walk" x2="0" y2="1"><stop stop-color="#c9c2b4"/><stop offset="1" stop-color="#8d918c"/></linearGradient>
+    <pattern id="windows" width="104" height="78" patternUnits="userSpaceOnUse"><rect x="13" y="12" width="76" height="48" rx="2" fill="#a9bdc2" opacity=".7"/><path d="M50 12v48M13 36h76" stroke="#e7dbbf" stroke-width="3" opacity=".7"/></pattern>
+  </defs>
+  <rect width="1200" height="700" fill="url(#sky)"/>
+  <circle cx="944" cy="140" r="72" fill="url(#sun)" opacity=".9"/>
+  <path d="M0 390 130 285h150v120H0Zm880-80 120-105h200v205H880Z" fill="#77868a" opacity=".35"/>
+  <path d="M0 700V455l170-96h748l195 99v242Z" fill="url(#walk)"/>
+  <path d="M105 442V188l74-51h727l95 58v250Z" fill="#1c3042"/>
+  <path d="M142 430V205l58-37h735l84 45v217Z" fill="url(#glass)"/>
+  <path d="M142 430V205l58-37h735l84 45v217Z" fill="url(#windows)" opacity=".72"/>
+  <path d="m142 430 877 0v28H142z" fill="#d7c29a"/>
+  <path d="M105 442h1000l48 31H72Z" fill="#e3d7c2"/>
+  <path d="M105 473h1048v18H105z" fill="#86785f" opacity=".6"/>
+  <rect x="234" y="378" width="142" height="52" fill="#d9b978"/><rect x="393" y="378" width="142" height="52" fill="#d9b978"/><rect x="552" y="378" width="142" height="52" fill="#d9b978"/><rect x="711" y="378" width="142" height="52" fill="#d9b978"/><rect x="870" y="378" width="118" height="52" fill="#d9b978"/>
+  <path d="M0 573h1200v127H0z" fill="#747d7c" opacity=".72"/>
+  <path d="M0 598h1200" stroke="#ece3d1" stroke-width="3" opacity=".65"/>
+  <g fill="#263d43"><path d="M48 466h18v122H48z"/><circle cx="57" cy="432" r="56"/><circle cx="26" cy="451" r="35"/><circle cx="87" cy="453" r="34"/><path d="M1090 469h18v112h-18z"/><circle cx="1099" cy="432" r="54"/><circle cx="1067" cy="451" r="32"/><circle cx="1132" cy="450" r="34"/></g>
+  <path d="M0 650c135-36 257-33 370 0s226 32 345 0 308-43 485-1v51H0z" fill="#d3b57d" opacity=".42"/>
+  <g fill="#f3ead7"><circle cx="237" cy="510" r="4"/><circle cx="338" cy="522" r="3"/><circle cx="838" cy="514" r="4"/><circle cx="961" cy="526" r="3"/></g>
+  <text x="62" y="78" fill="#22384b" font-family="Arial,sans-serif" font-size="18" letter-spacing="5">GEOMDAN · COMMERCIAL</text>
+  <path d="M62 96h104" stroke="#bb9860" stroke-width="3"/>
+</svg>
