@@ -1,5 +1,4 @@
 window.BUJA_CONFIG={
-  previewOnly:true,
   supabaseUrl:'https://ngbjsutgtyorjhroiutz.supabase.co',
   supabaseAnonKey:'sb_publishable_wkP3xEPTNmarPS-RxJi6QA_72pMkXyy',
   officePhone:'032-566-8949',
@@ -9,4 +8,5 @@ window.BUJA_CONFIG={
   naverMapsClientId:'gpy2dm1cex',
   kakaoMapUrl:'https://place.map.kakao.com/1218078714'
 };
+
 
