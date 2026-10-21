@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="styles.css">
 <style>
 body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}.admin-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.admin-head h1{font-size:28px;margin:6px 0}.admin-card{background:#fff;padding:25px;margin:17px 0;border:1px solid #e5e9ec}.admin-card h2{font-size:17px;margin:0}.admin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.admin-grid label,.editor-form label{font-size:11px;color:#4f5c68}.admin-grid input:not([type=checkbox]),.admin-grid select,.admin-grid textarea,.editor-form input,.editor-form select,.editor-form textarea{display:block;width:100%;padding:10px;margin-top:5px;border:1px solid #dce1e5;background:white;font-size:12px}.admin-grid textarea,.editor-form textarea{resize:vertical}.admin-grid .wide{grid-column:1/-1}.admin-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.admin-table{width:100%;border-collapse:collapse;font-size:11px}.admin-table td,.admin-table th{padding:11px;border-bottom:1px solid #edf0f2;text-align:left;vertical-align:top}.admin-table button{border:0;background:#edf0f2;padding:6px 9px;cursor:pointer;margin:2px}.admin-status{font-size:12px;color:#617281}.admin-status.error{color:#a33d35}.admin-login{max-width:420px;margin:10vh auto;background:white;padding:32px}.admin-login input{display:block;width:100%;padding:12px;margin:10px 0;border:1px solid #ddd}.admin-tabs{display:flex;gap:8px;margin:20px 0}.admin-tab{border:1px solid #dbe0e4;background:white;padding:11px 17px;cursor:pointer;color:#405161}.admin-tab.active{background:#12243a;color:white}.admin-panel[hidden]{display:none}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.admin-stat{background:white;border:1px solid #e5e9ec;padding:17px}.admin-stat b{display:block;font-size:22px}.admin-stat span{font-size:10px;color:#778493}.editor-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:20px}.editor-form .wide{grid-column:1/-1}.check-line{display:flex;align-items:center;gap:8px}.check-line input{display:inline!important;width:auto!important}.admin-help{font-size:11px;color:#778493;line-height:1.7}.admin-head .text-link{white-space:nowrap}@media(max-width:720px){.admin{margin:22px auto;padding:0 14px}.admin-card{padding:17px}.admin-grid,.editor-form{grid-template-columns:1fr}.admin-grid .wide,.editor-form .wide{grid-column:auto}.admin-stats{gap:7px}.admin-stat{padding:12px}.admin-stat b{font-size:18px}.admin-tabs{overflow:auto}.admin-tab{white-space:nowrap}.admin-table{font-size:10px}}
+.admin-actions label{display:flex;align-items:center;gap:7px;font-size:12px}.admin-actions select{padding:8px;border:1px solid #dce1e5;background:#fff}.admin-actions button:disabled{opacity:.58;cursor:default}@media(max-width:560px){#blog-import-list article.admin-card{grid-template-columns:1fr!important}#blog-import-list article.admin-card>img{max-width:180px}}
 </style>
 </head>
 <body>
@@ -51,6 +52,7 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 <button class="admin-tab active" data-panel="properties-panel">매물 관리</button>
 <button class="admin-tab" data-panel="inquiries-panel">문의 관리</button>
 <button class="admin-tab" data-panel="posts-panel">게시글 관리</button>
+<button class="admin-tab" data-panel="blog-import-panel">네이버 글 가져오기</button>
 <button class="admin-tab" data-panel="clients-panel">고객·상담 관리</button>
 </nav>
 <section class="admin-panel" id="properties-panel">
@@ -73,12 +75,15 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </select>
 </label>
 <label>거래 유형<select name="transaction_type">
+<option>정보 확인 필요</option>
 <option>매매</option>
 <option>전세</option>
 <option>월세</option>
 </select>
 </label>
 <label>지역<input name="area" placeholder="예: 아라동">
+</label>
+<label>건물명<input name="building_name" placeholder="확인된 경우 입력">
 </label>
 <label>전용면적(㎡)<input name="area_m2" type="number" min="0" step="0.01">
 </label>
@@ -102,6 +107,7 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </label>
 <label>사진 주소(URL)<input name="image_url" type="url" placeholder="이미지 업로드 또는 주소 입력">
 </label>
+<label class="wide">네이버 원문 주소<input name="source_url" type="url" placeholder="블로그 원문 링크"></label>
 <label>사진 파일 업로드<input type="file" id="property-image-file" accept="image/*">
 </label>
 <label>진행 상태<select name="status">
@@ -180,6 +186,7 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </label>
 <label>분류<select name="category">
 <option>검단신도시 부동산</option>
+<option>부동산 관련 정보</option>
 <option>상가 및 상가임대차</option>
 <option>토지 및 건축 정보</option>
 <option>오피스텔 및 사무실</option>
@@ -206,6 +213,7 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </label>
 <label>대표 이미지 주소<input name="cover_url" type="url">
 </label>
+<label>네이버 원문 주소<input name="source_url" type="url" placeholder="블로그 원문 링크"></label>
 <label>대표 이미지 파일<input type="file" id="post-image-file" accept="image/*">
 </label>
 <label class="wide check-line">
@@ -235,6 +243,13 @@ body{background:#f3f5f7}.admin{max-width:1180px;margin:38px auto;padding:0 24px}
 </tbody>
 </table>
 </div>
+</section>
+</section>
+<section class="admin-panel" id="blog-import-panel" hidden>
+<section class="admin-card">
+<div class="admin-head"><div><h2>네이버 블로그 새 글</h2><p class="admin-help">공식 RSS에서 최근 글을 확인합니다. 여기서 가져온 글은 비공개 초안으로만 저장되며, 매물 조건을 직접 확인하고 공개 상태를 바꿔야 방문자에게 보입니다.</p></div><button type="button" class="btn btn-dark" id="refresh-blog-feed">새 글 확인</button></div>
+<p id="blog-import-message" class="admin-status" aria-live="polite">로그인 후 새 글 확인을 눌러 주세요.</p>
+<div id="blog-import-list"></div>
 </section>
 </section>
 <section class="admin-panel" id="clients-panel" hidden>

@@ -8,7 +8,8 @@ create table if not exists public.properties (
   contract_area_m2 numeric, price numeric, deposit numeric, rent numeric,
   maintenance_fee numeric, premium numeric, available_date date,
   use_type text, recommended_business text, parking text, description text,
-  image_url text, status text not null default 'preparing', is_public boolean not null default false,
+  image_url text, source_url text, naver_post_id text,
+  status text not null default 'preparing', is_public boolean not null default false,
   internal_note text, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
   constraint properties_status_check check(status in ('preparing','published','consulting','contracting','completed','closed'))
 );
@@ -20,7 +21,7 @@ create table if not exists public.inquiries (
 create table if not exists public.blog_posts (
   id uuid primary key default gen_random_uuid(), title text not null, slug text not null unique,
   category text not null, excerpt text, body text not null, cover_url text, author text not null default '검단 윤소장',
-  seo_title text, seo_description text, is_published boolean not null default false,
+  seo_title text, seo_description text, source_url text, is_published boolean not null default false,
   published_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table if not exists public.clients (
@@ -49,7 +50,7 @@ create policy "visitors read public properties" on public.properties for select 
 create or replace view public.properties_public with (security_barrier=true, security_invoker=true) as
  select id,title,property_type,transaction_type,area,floor,area_m2,contract_area_m2,
         price,deposit,rent,maintenance_fee,available_date,use_type,recommended_business,
-        parking,description,image_url,created_at,updated_at
+        parking,description,image_url,created_at,updated_at,source_url
  from public.properties where is_public=true and status='published';
 grant select on public.properties_public to anon, authenticated;
 drop policy if exists "admins manage blog posts" on public.blog_posts;
@@ -57,7 +58,7 @@ create policy "admins manage blog posts" on public.blog_posts for all to authent
 drop policy if exists "visitors read published posts" on public.blog_posts;
 create policy "visitors read published posts" on public.blog_posts for select to anon, authenticated using (is_published=true and published_at is not null and published_at<=now());
 create or replace view public.blog_posts_public with (security_barrier=true, security_invoker=true) as
- select id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,published_at,created_at,updated_at
+ select id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,published_at,created_at,updated_at,source_url
  from public.blog_posts where is_published=true and published_at is not null and published_at<=now();
 grant select on public.blog_posts_public to anon, authenticated;
 drop policy if exists "visitors submit inquiries" on public.inquiries;
@@ -69,9 +70,9 @@ create policy "admins manage clients" on public.clients for all to authenticated
 drop policy if exists "admins manage consultations" on public.consultations;
 create policy "admins manage consultations" on public.consultations for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
 revoke all on public.properties from anon;
-grant select(id,title,property_type,transaction_type,area,floor,area_m2,contract_area_m2,price,deposit,rent,maintenance_fee,available_date,use_type,recommended_business,parking,description,image_url,created_at,updated_at,is_public,status) on public.properties to anon;
+grant select(id,title,property_type,transaction_type,area,floor,area_m2,contract_area_m2,price,deposit,rent,maintenance_fee,available_date,use_type,recommended_business,parking,description,image_url,source_url,created_at,updated_at,is_public,status) on public.properties to anon;
 revoke all on public.blog_posts from anon;
-grant select(id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,published_at,created_at,updated_at,is_published) on public.blog_posts to anon;
+grant select(id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,source_url,published_at,created_at,updated_at,is_published) on public.blog_posts to anon;
 grant select, insert, update, delete on public.properties to authenticated;
 grant insert on public.inquiries to anon, authenticated;
 grant select, update, delete on public.inquiries to authenticated;
@@ -82,6 +83,8 @@ grant insert(request_type,name,phone,property_type,area,details,consent) on publ
 create index if not exists properties_public_created_idx on public.properties(is_public,status,created_at desc);
 create index if not exists inquiries_created_idx on public.inquiries(created_at desc);
 create index if not exists blog_posts_published_idx on public.blog_posts(is_published,published_at desc);
+create unique index if not exists properties_naver_post_id_uidx on public.properties(naver_post_id) where naver_post_id is not null;
+create unique index if not exists blog_posts_source_url_uidx on public.blog_posts(source_url) where source_url is not null;
 
 create or replace function public.touch_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at=now(); return new; end $$;
