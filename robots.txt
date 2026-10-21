@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+User-agent: Googlebot
+Allow: /
+User-agent: Yeti
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+Sitemap: https://buja-real-estate.vercel.app/sitemap.xml
