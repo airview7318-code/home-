@@ -11,9 +11,6 @@ const formatAmount = value => {
 };
 
 async function getPublicSupabaseConfig() {
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-    return { url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY };
-  }
   return { url: PUBLIC_SUPABASE_URL, key: PUBLIC_SUPABASE_KEY };
 }
 
@@ -94,6 +91,7 @@ ${imageMarkup}<h2>매물 정보</h2><div class="guide-checklist">${factsMarkup}<
 <div class="guide-cta"><div><b>이 매물에 대해 상담하시겠어요?</b><p>현재 조건과 방문 가능 시간을 전화로 확인해 주세요.</p></div><a href="tel:0325668949">032-566-8949 전화하기</a></div><p><a href="/#listings">← 공개 매물 목록으로</a></p></main>
 <footer class="guide-footer"><b>부자부동산공인중개사사무소</b> · 대표공인중개사 윤민욱<br>인천광역시 검단구 원당동 1043-14 메가타워 101호 · 등록번호 제28260-2024-00008호<br><a href="/">홈페이지</a> · <a href="https://naver.me/F0z9zmWA" target="_blank" rel="noopener noreferrer">네이버 지도</a> · <a href="https://open.kakao.com/o/saJVu9Si" target="_blank" rel="noopener noreferrer">카카오톡 상담</a></footer></body></html>`);
   } catch (error) {
+    console.error('Public property detail lookup failed:', error?.message || 'unknown error');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     return res.status(503).send('공개 매물 정보를 일시적으로 불러오지 못했습니다. 전화 또는 카카오톡으로 문의해 주세요.');
