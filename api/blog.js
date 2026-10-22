@@ -81,7 +81,7 @@ module.exports = async function blogFeed(req, res) {
     for (const item of items) {
       if (!['상가', '토지', '오피스텔', '사무실', '아파트'].includes(item.kind)) continue;
       const group = grouped.get(item.kind) || [];
-      if (group.length < 6) group.push(item);
+      group.push(item);
       grouped.set(item.kind, group);
     }
     const propertyPosts = [...grouped.values()].flat();
