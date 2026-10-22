@@ -3,6 +3,9 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/property/:id", "destination": "/api/property?id=:id" }
+  ],
   "headers": [
     {
       "source": "/admin.html",
@@ -18,3 +21,4 @@
     }
   ]
 }
+
