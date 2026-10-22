@@ -29,7 +29,7 @@ module.exports = async function propertyDetail(req, res) {
     const { url, key } = await getPublicSupabaseConfig();
     const endpoint = new URL('/rest/v1/properties_public', url);
     endpoint.search = new URLSearchParams({
-      select: 'id,title,property_type,transaction_type,area,price,deposit,rent,area_m2,floor,parking,building_name,description,image_url,source_url,created_at',
+      select: 'id,title,property_type,transaction_type,area,price,deposit,rent,area_m2,floor,parking,description,image_url,source_url,created_at',
       id: `eq.${id}`
     });
     const response = await fetch(endpoint, {
