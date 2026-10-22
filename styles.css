@@ -20,3 +20,11 @@
 .featured-property:hover .property-image>img{transform:scale(1.04)}
 .featured-property .property-detail-link{text-decoration:none;border-bottom:1px solid #c6b38f;padding-bottom:3px}
 
+
+.blog-pagination{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding:26px 0 10px}
+.blog-pagination[hidden]{display:none}
+.blog-pagination button{min-width:40px;height:40px;padding:0 12px;border:1px solid #ddd7ca;border-radius:999px;background:#fff;color:#17283a;font:inherit;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.blog-pagination button:hover:not(:disabled),.blog-pagination button[aria-current=page]{border-color:#17283a;background:#17283a;color:#fff}
+.blog-pagination button:disabled{opacity:.4;cursor:default}
+.blog-archive-link{text-align:center;padding:8px 0 4px}
+@media(max-width:600px){.blog-pagination{gap:6px;padding-top:20px}.blog-pagination button{min-width:38px;height:38px;padding:0 10px}}
