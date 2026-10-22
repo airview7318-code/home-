@@ -1,4 +1,7 @@
 const SITE_ORIGIN = 'https://buja-real-estate.vercel.app';
+// This is the project's public publishable key, also used by config.js in the browser.
+const PUBLIC_SUPABASE_URL = 'https://ngbjsutgtyorjhroiutz.supabase.co';
+const PUBLIC_SUPABASE_KEY = 'sb_publishable_wkP3xEPTNmarPS-RxJi6QA_72pMkXyy';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const formatAmount = value => {
@@ -11,13 +14,7 @@ async function getPublicSupabaseConfig() {
   if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
     return { url: process.env.SUPABASE_URL, key: process.env.SUPABASE_ANON_KEY };
   }
-  const response = await fetch(`${SITE_ORIGIN}/config.js`, { signal: AbortSignal.timeout(5000) });
-  if (!response.ok) throw new Error('Public site configuration is unavailable');
-  const source = await response.text();
-  const url = source.match(/supabaseUrl\s*:\s*'([^']+)'/)?.[1];
-  const key = source.match(/supabaseAnonKey\s*:\s*'([^']+)'/)?.[1];
-  if (!url || !key || !/^https:\/\//.test(url)) throw new Error('Public Supabase configuration is invalid');
-  return { url, key };
+  return { url: PUBLIC_SUPABASE_URL, key: PUBLIC_SUPABASE_KEY };
 }
 
 function notFound(res) {
