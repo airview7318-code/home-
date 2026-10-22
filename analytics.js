@@ -1,6 +1,6 @@
 /* Google Analytics 4: only starts after the visitor opts in. Never pass inquiry fields or raw URLs. */
 (()=> {
-  const id=window.BUJA_CONFIG?.analyticsMeasurementId;
+  const id=window.BUJA_CONFIG?.analyticsMeasurementId||'G-PGX741RJ8F';
   if(!/^G-[A-Z0-9]+$/.test(id||'')) return;
   const consentKey='buja_ga_consent_v1';
   const pageLocation=()=>location.origin+location.pathname+location.hash;
