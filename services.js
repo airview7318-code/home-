@@ -43,7 +43,7 @@
   if(faqDialog){
     document.querySelectorAll('[data-faq-topic]').forEach(button=>button.addEventListener('click',()=>{
       const topic=button.dataset.faqTopic,items=faqContent[topic]||faqContent['계약'];
-      byId('faq-dialog-title').textContent=topic==='집보기'?'집을 보러 갈 때':topic==='돈과 관리비'?'돈과 관리비':topic==='상가 특약'?'상가를 계약할 때':topic==='계약 전'?'계약하기 전':topic==='운영시간'?'전화 상담 운영시간':topic;
+      byId('faq-dialog-title').textContent=topic==='보증금'?'보증금과 월세 부담은 어떻게 되나요?':topic==='집보기'?'집을 보러 갈 때':topic==='돈과 관리비'?'돈과 관리비':topic==='상가 특약'?'상가를 계약할 때':topic==='계약 전'?'계약하기 전':topic==='운영시간'?'전화 상담 운영시간':topic;
       const body=byId('faq-dialog-body');body.replaceChildren();const heading=document.createElement('h3');heading.textContent='확인할 내용';body.append(heading);const list=document.createElement('ul');for(const item of items){const li=document.createElement('li');li.textContent=item;list.append(li)}body.append(list);faqDialog.showModal();
     }));
     byId('faq-dialog').querySelector('.faq-close').addEventListener('click',()=>faqDialog.close());
