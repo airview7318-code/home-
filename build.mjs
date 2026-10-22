@@ -18,7 +18,7 @@ try {
       const listings = await response.json();
       if (Array.isArray(listings) && listings.length) {
         let sitemap = await readFile('dist/sitemap.xml', 'utf8');
-        const entries = listings.filter(item => item.id).map(item => `  <url>\n    <loc>https://buja-real-estate.vercel.app/property.html?id=${encodeURIComponent(item.id)}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>`).join('\n');
+        const entries = listings.filter(item => item.id).map(item => `  <url>\n    <loc>https://buja-real-estate.vercel.app/property/${encodeURIComponent(item.id)}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>`).join('\n');
         sitemap = sitemap.replace('</urlset>', `${entries}\n</urlset>`);
         await writeFile('dist/sitemap.xml', sitemap);
         console.log(`Added ${listings.length} public property URLs to sitemap.`);
@@ -32,3 +32,6 @@ console.log('Built static site into dist/');
 
 await cp('profile-yun-minuk.png','dist/profile-yun-minuk.png');
 await cp('buja-logo.svg','dist/buja-logo.svg');
+
+
+
