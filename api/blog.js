@@ -35,14 +35,16 @@ function safeExcerpt(value) {
 function classify(category, title) {
   const c = category.replace(/\s/g, '');
   const t = title.replace(/\s/g, '');
-  if (/정보|소식/.test(c)) return '소식';
+  const listing = /매물|호실|입주임박|임대중|선임대|급매|분양중|매매가|매매금액/.test(t);
+  if (!listing && /건축물대장|등기부등본|확정일자|전입신고|권리분석|임대차계약|계약체크|계약전|계약서|용도지역|건폐율|용적률|중개보수|중개수수료|취득세|재산세|보증금|월세|관리비|체크리스트|확인방법|보는법|보는방법|주의사항|절차|계산방법|계산법/.test(t)) return '정보';
+  if (!listing && /정보|가이드|칼럼|생활법률/.test(c)) return '정보';
   if (/오피스텔/.test(t)) return '오피스텔';
   if (/아파트/.test(t) && /아파트/.test(c)) return '아파트';
   if (/토지|택지|필지/.test(t) || c.includes('토지')) return '토지';
   if (c.includes('상가') || c.includes('사무실')) return /사무실|업무공간/.test(t) ? '사무실' : '상가';
   if (/상가|사무실|창업|양도양수/.test(t)) return /사무실/.test(t) ? '사무실' : '상가';
-  if (/검단|부동산/.test(t)) return '소식';
-  return '기타';
+  if (/검단|부동산/.test(t) || /소식|뉴스/.test(c)) return '소식';
+  return '정보';
 }
 
 function imageFrom(description) {
@@ -86,7 +88,8 @@ module.exports = async function blogFeed(req, res) {
     }
     const propertyPosts = [...grouped.values()].flat();
     const newsPosts = items.filter(item => item.kind === '소식').slice(0, 6);
-    return res.status(200).json({ propertyPosts, newsPosts, updatedAt: new Date().toISOString() });
+    const infoPosts = items.filter(item => item.kind === '정보').slice(0, 12);
+    return res.status(200).json({ propertyPosts, newsPosts, infoPosts, updatedAt: new Date().toISOString() });
   } catch (error) {
     return res.status(502).json({ error: '블로그 피드를 불러오지 못했습니다.' });
   }
