@@ -38,3 +38,4 @@
 !api/
 !api/**
 !404.html
+!visit-tracker.js
