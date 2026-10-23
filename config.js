@@ -6,7 +6,8 @@ window.BUJA_CONFIG={
   kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
   naverUrl:'https://naver.me/F0z9zmWA',
   naverMapsClientId:'gpy2dm1cex',
-  kakaoMapUrl:'https://place.map.kakao.com/1218078714'
+  kakaoMapUrl:'https://place.map.kakao.com/1218078714',
+  analyticsMeasurementId:'G-PGX741RJ8F'
 };
 
 

@@ -33,3 +33,4 @@ create or replace view public.blog_posts_public
 
 grant select on public.blog_posts_public to anon, authenticated;
 grant select(source_url) on public.blog_posts to anon;
+

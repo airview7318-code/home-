@@ -81,7 +81,7 @@ module.exports = async function propertyDetail(req, res) {
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(summary)}"><link rel="canonical" href="${escapeHtml(canonical)}">
 <meta property="og:type" content="article"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(summary)}"><meta property="og:url" content="${escapeHtml(canonical)}">${image ? `<meta property="og:image" content="${escapeHtml(image)}">` : ''}
-<link rel="icon" type="image/svg+xml" href="/buja-logo.svg"><script src="/config.js"></script><script defer src="/visit-tracker.js"></script><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/geo-content.css">
+<link rel="icon" type="image/svg+xml" href="/buja-logo.svg"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/geo-content.css">
 <script type="application/ld+json">${JSON.stringify(listing).replace(/</g, '\\u003c')}</script></head>
 <body class="guide-page"><header class="guide-top"><a class="guide-brand" href="/"><img src="/buja-logo.svg" alt=""><span>검단신도시 부자부동산</span></a><a href="/#listings">전체 매물 보기 ↗</a></header>
 <div class="guide-breadcrumb"><a href="/">홈</a>　›　<a href="/#listings">검단신도시 공개 매물</a>　›　${escapeHtml(property.property_type || '매물')}</div>
@@ -89,7 +89,7 @@ module.exports = async function propertyDetail(req, res) {
 ${imageMarkup}<h2>매물 정보</h2><div class="guide-checklist">${factsMarkup}</div><h2>상세 안내</h2><p>${escapeHtml(property.description || '추가 상세 조건과 현재 거래 가능 여부는 상담 시 확인해 주세요.')}</p>${sourceMarkup}
 <aside class="guide-notice">가격, 임대 조건, 공개 여부와 거래 가능 상태는 바뀔 수 있습니다. 계약 전 최신 서류와 현장을 확인해 주세요.</aside>
 <div class="guide-cta"><div><b>이 매물에 대해 상담하시겠어요?</b><p>현재 조건과 방문 가능 시간을 전화로 확인해 주세요.</p></div><a href="tel:0325668949">032-566-8949 전화하기</a></div><p><a href="/#listings">← 공개 매물 목록으로</a></p></main>
-<footer class="guide-footer"><b>부자부동산공인중개사사무소</b> · 대표공인중개사 윤민욱<br>인천광역시 검단구 원당동 1043-14 메가타워 101호 · 등록번호 제28260-2024-00008호<br><a href="/">홈페이지</a> · <a href="https://naver.me/F0z9zmWA" target="_blank" rel="noopener noreferrer">네이버 지도</a> · <a href="https://open.kakao.com/o/saJVu9Si" target="_blank" rel="noopener noreferrer">카카오톡 상담</a> · <a href="/privacy.html">개인정보 처리방침</a></footer></body></html>`);
+<footer class="guide-footer"><b>부자부동산공인중개사사무소</b> · 대표공인중개사 윤민욱<br>인천광역시 검단구 원당동 1043-14 메가타워 101호 · 등록번호 제28260-2024-00008호<br><a href="/">홈페이지</a> · <a href="https://naver.me/F0z9zmWA" target="_blank" rel="noopener noreferrer">네이버 지도</a> · <a href="https://open.kakao.com/o/saJVu9Si" target="_blank" rel="noopener noreferrer">카카오톡 상담</a></footer></body></html>`);
   } catch (error) {
     console.error('Public property detail lookup failed:', error?.message || 'unknown error');
     res.setHeader('Cache-Control', 'no-store');
@@ -97,3 +97,4 @@ ${imageMarkup}<h2>매물 정보</h2><div class="guide-checklist">${factsMarkup}<
     return res.status(503).send('공개 매물 정보를 일시적으로 불러오지 못했습니다. 전화 또는 카카오톡으로 문의해 주세요.');
   }
 };
+
