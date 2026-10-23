@@ -36,13 +36,14 @@
     '돈과 관리비':['초기 비용은 계약금·중도금·잔금과 중개보수·세금·이사 비용을 나눠 계산하세요.','월 비용은 임대료, 관리비, 공과금, 주차료 등 실제 부담 항목을 포함해 비교하는 게 좋습니다.','대출 가능액이나 보증 가입은 개인별 심사와 대상 요건이 있으므로 금융기관·보증기관에서 확인하세요.'],
     '특약':['특약은 누가, 무엇을, 언제까지, 어떤 방식으로 이행하는지 구체적으로 작성하는 편이 좋습니다.','시설 인수, 수선 범위, 잔금 전 권리 변동, 인도일, 관리비 정산 등 당사자 합의 사항을 빠짐없이 기록하세요.','불명확하거나 권리·법률 효과가 큰 문구는 서명 전에 법률 전문가에게 검토받으세요.'],
     '잔금과 입주':['잔금 직전 등기사항과 당사자 계좌를 확인하고, 열쇠·시설·비품 인수 상태를 함께 기록하세요.','전입신고·확정일자·사업자등록·인허가 등 필요한 절차는 거래 유형과 사용 목적에 맞춰 관할 기관에 확인하세요.','잔금 지급과 실제 인도 시점, 관리비 정산 기준을 계약서 및 인수인계 기록으로 남기세요.'],
-    '상가 특약':['상가 임대차에서는 업종·용도 적합성, 인허가 가능 여부, 렌트프리·시설 인수 범위를 먼저 확인하세요.','수선 책임, 간판·내부 공사 승인, 원상회복 기준, 관리비 산식, 갱신 조건과 인도 시점을 문서로 협의하세요.','임대차보호법 적용은 환산보증금과 구체적 상황에 따라 달라질 수 있어 최신 법령과 전문가 확인이 필요합니다.']
+    '상가 특약':['상가 임대차에서는 업종·용도 적합성, 인허가 가능 여부, 렌트프리·시설 인수 범위를 먼저 확인하세요.','수선 책임, 간판·내부 공사 승인, 원상회복 기준, 관리비 산식, 갱신 조건과 인도 시점을 문서로 협의하세요.','임대차보호법 적용은 환산보증금과 구체적 상황에 따라 달라질 수 있어 최신 법령과 전문가 확인이 필요합니다.'],
+    '운영시간':['전화 상담은 월요일부터 토요일까지 오전 10시부터 오후 7시까지 가능합니다.','매주 일요일은 정기 휴무입니다. 방문 상담은 오시기 전에 전화로 시간을 확인해 주세요.','전화 상담: 032-566-8949']
   };
   const faqDialog=byId('faq-dialog');
   if(faqDialog){
     document.querySelectorAll('[data-faq-topic]').forEach(button=>button.addEventListener('click',()=>{
       const topic=button.dataset.faqTopic,items=faqContent[topic]||faqContent['계약'];
-      byId('faq-dialog-title').textContent=topic==='집보기'?'집을 보러 갈 때':topic==='돈과 관리비'?'돈과 관리비':topic==='상가 특약'?'상가를 계약할 때':topic==='계약 전'?'계약하기 전':topic;
+      byId('faq-dialog-title').textContent=topic==='보증금'?'보증금과 월세 부담은 어떻게 되나요?':topic==='집보기'?'집을 보러 갈 때':topic==='돈과 관리비'?'돈과 관리비':topic==='상가 특약'?'상가를 계약할 때':topic==='계약 전'?'계약하기 전':topic==='운영시간'?'전화 상담 운영시간':topic;
       const body=byId('faq-dialog-body');body.replaceChildren();const heading=document.createElement('h3');heading.textContent='확인할 내용';body.append(heading);const list=document.createElement('ul');for(const item of items){const li=document.createElement('li');li.textContent=item;list.append(li)}body.append(list);faqDialog.showModal();
     }));
     byId('faq-dialog').querySelector('.faq-close').addEventListener('click',()=>faqDialog.close());
