@@ -25,12 +25,12 @@
     box.innerHTML=featured.map(item=>`<a class="insight-card insight-link" href="${item.href}" target="_blank" rel="noopener noreferrer"><img src="${item.image}" alt="${item.alt}" loading="lazy"><div><span>${item.category}</span><h3>${item.title}</h3><p>${item.excerpt}</p><span class="insight-cta">네이버 블로그에서 원문 보기 ↗</span></div></a>`).join('');
   };
   if(!cfg.supabaseUrl||!cfg.supabaseAnonKey){renderFeatured();return;}
-  fetch(`${cfg.supabaseUrl.replace(/\/$/,'')}/rest/v1/blog_posts_public?select=id,title,slug,category,excerpt,body,cover_url,published_at,author&order=published_at.desc&limit=6`,{headers:{apikey:cfg.supabaseAnonKey,Authorization:`Bearer ${cfg.supabaseAnonKey}`}})
+  fetch(`${cfg.supabaseUrl.replace(/\/$/,'')}/rest/v1/blog_posts_public?select=id,title,slug,category,excerpt,body,cover_url,published_at,author,source_url&order=published_at.desc&limit=6`,{headers:{apikey:cfg.supabaseAnonKey,Authorization:`Bearer ${cfg.supabaseAnonKey}`}})
     .then(r=>{if(!r.ok)throw Error();return r.json();})
     .then(posts=>{
       if(!posts.length){renderFeatured();return;}
-      box.innerHTML=posts.map(p=>`<article class="insight-card" data-post="${esc(p.id)}"><img src="${esc(p.cover_url||'assets/detached-home-land-thumbnail.jpg')}" alt="${esc(p.title)}" loading="lazy"><div><span>${esc(p.category)}</span><h3>${esc(p.title)}</h3><p>${esc(p.excerpt||'')}</p><time>${esc((p.published_at||'').slice(0,10))} · ${esc(p.author||'검단 윤소장')}</time></div></article>`).join('');
-      box.querySelectorAll('.insight-card').forEach(el=>el.addEventListener('click',()=>{
+      box.innerHTML=posts.map(p=>p.source_url?`<a class="insight-card insight-link" href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(p.cover_url||'assets/detached-home-land-thumbnail.jpg')}" alt="${esc(p.title)}" loading="lazy"><div><span>${esc(p.category)}</span><h3>${esc(p.title)}</h3><p>${esc(p.excerpt||'')}</p><span class="insight-cta">네이버 블로그에서 원문 보기 ↗</span></div></a>`:`<article class="insight-card" data-post="${esc(p.id)}"><img src="${esc(p.cover_url||'assets/detached-home-land-thumbnail.jpg')}" alt="${esc(p.title)}" loading="lazy"><div><span>${esc(p.category)}</span><h3>${esc(p.title)}</h3><p>${esc(p.excerpt||'')}</p><time>${esc((p.published_at||'').slice(0,10))} · ${esc(p.author||'검단 윤소장')}</time></div></article>`).join('');
+      box.querySelectorAll('.insight-card[data-post]').forEach(el=>el.addEventListener('click',()=>{
         const p=posts.find(x=>x.id===el.dataset.post);if(!p)return;
         const d=document.createElement('dialog');d.className='post-dialog';d.innerHTML=`<img src="${esc(p.cover_url||'')}" alt=""><article><button aria-label="닫기">×</button><span class="eyebrow">${esc(p.category)} · ${esc((p.published_at||'').slice(0,10))}</span><h2>${esc(p.title)}</h2><div class="post-body">${esc(p.body||p.excerpt||'')}</div><p>${esc(p.author||'검단 윤소장')}</p></article>`;document.body.append(d);d.showModal();d.querySelector('button').onclick=()=>{d.close();d.remove();};d.onclick=e=>{if(e.target===d){d.close();d.remove();}};
       }));
