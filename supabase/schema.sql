@@ -16,7 +16,9 @@ create table if not exists public.properties (
 create table if not exists public.inquiries (
   id uuid primary key default gen_random_uuid(), request_type text not null,
   name text not null, phone text not null, property_type text, area text, details text,
-  consent boolean not null check(consent=true), created_at timestamptz not null default now(), status text not null default '신규 접수', admin_note text
+  consent boolean not null check(consent=true), created_at timestamptz not null default now(), status text not null default '신규 접수', admin_note text,
+  talktalk_token uuid not null default gen_random_uuid(), talktalk_consent boolean not null default false,
+  talktalk_delivery_status text not null default '대기', talktalk_sent_at timestamptz
 );
 create table if not exists public.blog_posts (
   id uuid primary key default gen_random_uuid(), title text not null, slug text not null unique,
@@ -80,7 +82,7 @@ create or replace view public.developments_public with (security_barrier=true) a
  from public.developments where is_public=true and status <> '비공개';
 grant select on public.developments_public to anon, authenticated;
 drop policy if exists "visitors submit inquiries" on public.inquiries;
-create policy "visitors submit inquiries" on public.inquiries for insert to anon, authenticated with check (consent=true and status='신규 접수' and admin_note is null and length(name) between 1 and 80 and length(phone) between 7 and 30);
+create policy "visitors submit inquiries" on public.inquiries for insert to anon, authenticated with check (consent=true and status='신규 접수' and admin_note is null and talktalk_token is not null and length(name) between 1 and 80 and length(phone) between 7 and 30);
 drop policy if exists "admins read and manage inquiries" on public.inquiries;
 create policy "admins read and manage inquiries" on public.inquiries for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
 drop policy if exists "admins manage clients" on public.clients;
@@ -98,9 +100,10 @@ grant select, insert, update, delete on public.clients, public.consultations to 
 grant select, insert, update, delete on public.blog_posts to authenticated;
 grant select, insert, update, delete on public.developments to authenticated;
 revoke insert on public.inquiries from anon, authenticated;
-grant insert(request_type,name,phone,property_type,area,details,consent) on public.inquiries to anon, authenticated;
+grant insert(request_type,name,phone,property_type,area,details,consent,talktalk_token,talktalk_consent) on public.inquiries to anon, authenticated;
 create index if not exists properties_public_created_idx on public.properties(is_public,status,created_at desc);
 create index if not exists inquiries_created_idx on public.inquiries(created_at desc);
+create unique index if not exists inquiries_talktalk_token_uidx on public.inquiries(talktalk_token);
 create index if not exists blog_posts_published_idx on public.blog_posts(is_published,published_at desc);
 create unique index if not exists properties_naver_post_id_uidx on public.properties(naver_post_id) where naver_post_id is not null;
 create unique index if not exists blog_posts_source_url_uidx on public.blog_posts(source_url) where source_url is not null;

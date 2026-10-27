@@ -6,6 +6,8 @@ window.BUJA_CONFIG={
   officePhone:'032-566-8949',
   officeRegistrationNumber:'',
   kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
+  talktalkUrl:'https://talk.naver.com/ct/w5wbcy',
+  talktalkBridgeEnabled:false,
   naverUrl:'https://naver.me/F0z9zmWA',
   kakaoMapUrl:'https://place.map.kakao.com/1218078714'
 };

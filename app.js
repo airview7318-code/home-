@@ -1,4 +1,4 @@
-const CONFIG={supabaseUrl:window.BUJA_CONFIG?.supabaseUrl||'',supabaseAnonKey:window.BUJA_CONFIG?.supabaseAnonKey||'',phone:(window.BUJA_CONFIG?.officePhone||'032-566-8949').replace(/[^\d+]/g,''),officeRegistrationNumber:String(window.BUJA_CONFIG?.officeRegistrationNumber||'').trim(),kakao:window.BUJA_CONFIG?.kakaoUrl||'https://open.kakao.com/o/saJVu9Si',naver:window.BUJA_CONFIG?.naverUrl||'https://naver.me/F0z9zmWA',kakaoMap:window.BUJA_CONFIG?.kakaoMapUrl||'https://place.map.kakao.com/1218078714',naverMapsClientId:window.BUJA_CONFIG?.naverMapsClientId||''};
+const CONFIG={supabaseUrl:window.BUJA_CONFIG?.supabaseUrl||'',supabaseAnonKey:window.BUJA_CONFIG?.supabaseAnonKey||'',phone:(window.BUJA_CONFIG?.officePhone||'032-566-8949').replace(/[^\d+]/g,''),officeRegistrationNumber:String(window.BUJA_CONFIG?.officeRegistrationNumber||'').trim(),kakao:window.BUJA_CONFIG?.kakaoUrl||'https://open.kakao.com/o/saJVu9Si',naver:window.BUJA_CONFIG?.naverUrl||'https://naver.me/F0z9zmWA',talktalk:window.BUJA_CONFIG?.talktalkUrl||'https://talk.naver.com/ct/w5wbcy',talktalkBridgeEnabled:window.BUJA_CONFIG?.talktalkBridgeEnabled===true,kakaoMap:window.BUJA_CONFIG?.kakaoMapUrl||'https://place.map.kakao.com/1218078714',naverMapsClientId:window.BUJA_CONFIG?.naverMapsClientId||''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const grid=document.querySelector('#property-grid');let properties=[];let activeKind='전체';document.querySelectorAll('a[href="tel:0325668949"]').forEach(a=>a.href=`tel:${CONFIG.phone}`);document.querySelectorAll(`a[href="${CONFIG.kakao}"]`).forEach(a=>a.href=CONFIG.kakao);document.querySelectorAll(`a[href="${CONFIG.naver}"]`).forEach(a=>a.href=CONFIG.naver);document.querySelectorAll(`a[href="${CONFIG.kakaoMap}"]`).forEach(a=>a.href=CONFIG.kakaoMap);
 const registrationNode=document.querySelector('#office-registration');if(registrationNode&&CONFIG.officeRegistrationNumber){registrationNode.textContent=`중개사무소 등록번호 · ${CONFIG.officeRegistrationNumber}`;registrationNode.hidden=false}
@@ -31,6 +31,12 @@ function initPublicInquiry(){
   if(!form)return;
   const status=document.querySelector('#inquiry-message');
   const button=form.querySelector('[type="submit"]');
+  const talkConsent=form.elements.talktalk_consent;
+  const talkConsentLabel=talkConsent?.closest('.inquiry-consent');
+  if(talkConsentLabel)talkConsentLabel.style.display=CONFIG.talktalkBridgeEnabled?'':'none';
+  const updateSubmitLabel=()=>{button.textContent=CONFIG.talktalkBridgeEnabled&&talkConsent?.checked?'접수 후 톡톡 안내':'상담 접수하기'};
+  talkConsent?.addEventListener('change',updateSubmitLabel);
+  updateSubmitLabel();
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
@@ -38,9 +44,14 @@ function initPublicInquiry(){
     if(!CONFIG.supabaseUrl||!CONFIG.supabaseAnonKey){status.textContent='접수 연결을 확인할 수 없습니다. 전화 또는 네이버 톡톡으로 문의해 주세요.';status.classList.add('error');return}
     const data=new FormData(form);
     const payload={request_type:String(data.get('request_type')||''),name:String(data.get('name')||'').trim(),phone:String(data.get('phone')||'').trim(),property_type:String(data.get('property_type')||''),area:String(data.get('area')||'').trim(),details:String(data.get('details')||'').trim(),consent:form.elements.consent.checked};
+    if(CONFIG.talktalkBridgeEnabled)payload.talktalk_consent=form.elements.talktalk_consent.checked;
     const validTypes=['매물 접수','찾는 매물','일반 문의'];
     const validProperties=['상가','상가주택','토지','오피스텔','사무실','아파트','기타'];
     if(!validTypes.includes(payload.request_type)||!validProperties.includes(payload.property_type)||payload.name.length<1||payload.name.length>80||payload.phone.length<7||payload.phone.length>30||!/^[0-9+() -]{7,30}$/.test(payload.phone)||payload.details.length<1||payload.details.length>2000||!payload.consent){status.textContent='입력 내용을 확인해 주세요.';status.classList.add('error');return}
+    const talktalkToken=CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent?crypto.randomUUID():null;
+    const talktalkTab=CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent?window.open('about:blank','_blank'):null;
+    if(talktalkTab)talktalkTab.opener=null;
+    if(talktalkToken)payload.talktalk_token=talktalkToken;
     button.disabled=true;
     status.classList.remove('error');
     status.textContent='상담 내용을 접수하고 있습니다…';
@@ -49,8 +60,16 @@ function initPublicInquiry(){
       if(!response.ok)throw new Error((await response.text()).slice(0,240)||`접수 실패 (${response.status})`);
       window.bujaTrack?.('generate_lead',{request_type:payload.request_type,property_type:payload.property_type});
       form.reset();
-      status.textContent='상담 접수가 완료되었습니다. 새 접수 알림은 등록된 이메일로 전송되며, 상세 내용은 관리자 센터에서 확인할 수 있습니다.';
+      if(CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent){
+        const talktalkUrl=new URL(CONFIG.talktalk);
+        talktalkUrl.searchParams.set('from',talktalkToken);
+        if(talktalkTab)talktalkTab.location.replace(talktalkUrl.href);else window.location.assign(talktalkUrl.href);
+        status.textContent='상담 접수가 완료되었습니다. 톡톡에 연결되면 입력하신 조건의 접수 요약이 안내됩니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다.';
+      }else{
+        status.textContent=payload.talktalk_consent&&!CONFIG.talktalkBridgeEnabled?'상담 접수가 완료되었습니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다. 톡톡 자동 안내는 연결 설정 후 이용할 수 있습니다.':payload.talktalk_consent?'상담 접수가 완료되었습니다. 접수 내용은 관리자 센터와 이메일로 전달됩니다.':'상담 접수가 완료되었습니다. 톡톡 안내 동의가 없어 관리자 센터와 이메일로 접수했습니다.';
+      }
     }catch(error){
+      talktalkTab?.close();
       console.error('Public inquiry submission failed:',error.message);
       status.textContent='접수되지 않았습니다. 잠시 후 다시 시도하거나 전화로 문의해 주세요.';
       status.classList.add('error');
