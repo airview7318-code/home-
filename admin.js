@@ -1,254 +1,52 @@
-const cfg=window.BUJA_CONFIG||{},url=(cfg.supabaseUrl||'').replace(/\/$/,''),key=cfg.supabaseAnonKey||'';let token='',adminUserId='',properties=[],posts=[],clients=[],developments=[]���m�G����ƭy�완료','비공개')),
-  location text, supply_scale text, area_info text, price_info text, schedule text,
-  image_url text, source_url text, description text,
-  is_public boolean not null default false,
-  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
-);
-create table if not exists public.clients (
-  id uuid primary key default gen_random_uuid(), name text not null, phone text,
-  client_type text, source text, desired_conditions jsonb not null default '{}',
-  status text not null default '신규 접수', next_contact_at timestamptz,
-  assigned_to text, created_at timestamptz not null default now(), admin_note text
-);
-create table if not exists public.consultations (
-  id uuid primary key default gen_random_uuid(), client_id uuid references public.clients(id) on delete cascade,
-  property_id uuid references public.properties(id) on delete set null, note text not null,
-  created_by uuid references auth.users(id), created_at timestamptz not null default now()
-);
-create or replace function public.is_buja_admin() returns boolean language sql stable as $$
- select coalesce(auth.jwt()->'app_metadata'->>'role'='admin',false)
-$$;
-alter table public.properties enable row level security;
-alter table public.inquiries enable row level security;
-alter table public.clients enable row level security;
-alter table public.consultations enable row level security;
-alter table public.blog_posts enable row level security;
-alter table public.developments enable row level security;
-drop policy if exists "admins manage properties" on public.properties;
-create policy "admins manage properties" on public.properties for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-drop policy if exists "visitors read public properties" on public.properties;
-create policy "visitors read public properties" on public.properties for select to anon, authenticated using (is_public=true and status='published');
-create or replace view public.properties_public with (security_barrier=true, security_invoker=true) as
- select id,title,property_type,transaction_type,area,floor,area_m2,contract_area_m2,
-        price,deposit,rent,maintenance_fee,available_date,use_type,recommended_business,
-        parking,description,image_url,created_at,updated_at,source_url
- from public.properties where is_public=true and status='published';
-grant select on public.properties_public to anon, authenticated;
-drop policy if exists "admins manage blog posts" on public.blog_posts;
-create policy "admins manage blog posts" on public.blog_posts for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-drop policy if exists "visitors read published posts" on public.blog_posts;
-create policy "visitors read published posts" on public.blog_posts for select to anon, authenticated using (is_published=true and published_at is not null and published_at<=now());
-create or replace view public.blog_posts_public with (security_barrier=true, security_invoker=true) as
- select id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,published_at,created_at,updated_at,source_url
- from public.blog_posts where is_published=true and published_at is not null and published_at<=now();
-grant select on public.blog_posts_public to anon, authenticated;
-drop policy if exists "admins manage developments" on public.developments;
-create policy "admins manage developments" on public.developments for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-drop policy if exists "visitors read public developments" on public.developments;
-create policy "visitors read public developments" on public.developments for select to anon, authenticated using (is_public=true and status <> '비공개');
-create or replace view public.developments_public with (security_barrier=true) as
- select id,title,category,status,location,supply_scale,area_info,price_info,schedule,image_url,source_url,description,created_at,updated_at
- from public.developments where is_public=true and status <> '비공개';
-grant select on public.developments_public to anon, authenticated;
-drop policy if exists "visitors submit inquiries" on public.inquiries;
-create policy "visitors submit inquiries" on public.inquiries for insert to anon, authenticated with check (consent=true and status='신규 접수' and admin_note is null and length(name) between 1 and 80 and length(phone) between 7 and 30);
-drop policy if exists "admins read and manage inquiries" on public.inquiries;
-create policy "admins read and manage inquiries" on public.inquiries for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-drop policy if exists "admins manage clients" on public.clients;
-create policy "admins manage clients" on public.clients for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-drop policy if exists "admins manage consultations" on public.consultations;
-create policy "admins manage consultations" on public.consultations for all to authenticated using (public.is_buja_admin()) with check (public.is_buja_admin());
-revoke all on public.properties from anon;
-grant select(id,title,property_type,transaction_type,area,floor,area_m2,contract_area_m2,price,deposit,rent,maintenance_fee,available_date,use_type,recommended_business,parking,description,image_url,source_url,created_at,updated_at,is_public,status) on public.properties to anon;
-revoke all on public.blog_posts from anon;
-grant select(id,title,slug,category,excerpt,body,cover_url,author,seo_title,seo_description,source_url,published_at,created_at,updated_at,is_published) on public.blog_posts to anon;
-grant select, insert, update, delete on public.properties to authenticated;
-grant insert on public.inquiries to anon, authenticated;
-grant select, update, delete on public.inquiries to authenticated;
-grant select, insert, update, delete on public.clients, public.consultations to authenticated;
-grant select, insert, update, delete on public.blog_posts to authenticated;
-grant select, insert, update, delete on public.developments to authenticated;
-revoke insert on public.inquiries from anon, authenticated;
-grant insert(request_type,name,phone,property_type,area,details,consent) on public.inquiries to anon, authenticated;
-create index if not exists properties_public_created_idx on public.properties(is_public,status,created_at desc);
-create index if not exists inquiries_created_idx on public.inquiries(created_at desc);
-create index if not exists blog_posts_published_idx on public.blog_posts(is_published,published_at desc);
-create unique index if not exists properties_naver_post_id_uidx on public.properties(naver_post_id) where naver_post_id is not null;
-create unique index if not exists blog_posts_source_url_uidx on public.blog_posts(source_url) where source_url is not null;
-create index if not exists developments_public_updated_idx on public.developments(is_public,status,updated_at desc);
+const cfg=window.BUJA_CONFIG||{},url=(cfg.supabaseUrl||'').replace(/\/$/,''),key=cfg.supabaseAnonKey||'';let token='',adminUserId='',properties=[],posts=[],clients=[],developments=[];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function setMessage(id,text,error=false){let el=document.getElementById(id);el.textContent=text;el.classList.toggle('error',error)}
+function apiHeaders(body=false){return {apikey:key,Authorization:`Bearer ${token}`,...(body?{'Content-Type':'application/json',Prefer:'return=representation'}:{})}}
+async function api(path,opts={}){let r=await fetch(`${url}/rest/v1/${path}`,{...opts,headers:{...apiHeaders(opts.body!==undefined),...(opts.headers||{})}});let txt=await r.text();if(!r.ok)throw Error(txt.slice(0,300)||`요청 실패 (${r.status})`);return txt?JSON.parse(txt):null}
+async function loadVisitStats(){const status=document.querySelector('#visit-stat-message'),dailyHost=document.querySelector('#visit-daily'),sourceHost=document.querySelector('#visit-sources');if(!status||!dailyHost)return;status.textContent='방문 통계를 불러오는 중입니다.';try{const stats=await api('rpc/get_admin_visit_stats',{method:'POST',body:'{}'});document.querySelector('#visit-total').textContent=Number(stats.total_visits||0).toLocaleString('ko-KR');document.querySelector('#visit-today').textContent=Number(stats.today_unique||0).toLocaleString('ko-KR');dailyHost.innerHTML=(Array.isArray(stats.daily)?stats.daily:[]).map(row=>{const date=new Date(row.date+'T00:00:00+09:00');return '<div class="visit-day"><span>'+date.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric',weekday:'short'})+'</span><b>'+Number(row.visitors||0).toLocaleString('ko-KR')+'명</b></div>'}).join('');const labels={direct:'직접 방문',naver:'네이버',google:'구글',youtube:'유튜브',instagram:'인스타그램',kakao:'카카오',other:'기타 사이트'};if(sourceHost){if(!Array.isArray(stats.sources_today)){sourceHost.innerHTML='<p class="admin-help">유입 경로 통계를 사용하려면 Supabase에 방문 경로 통계 업데이트를 적용해야 합니다.</p>'}else{const sources=stats.sources_today;sourceHost.innerHTML=sources.map(row=>'<div class="visit-source"><b>'+labels[row.source]+'</b><span>'+Number(row.visitors||0).toLocaleString('ko-KR')+'명</span></div>').join('')||'<p class="admin-help">오늘 집계된 유입 경로가 없습니다.</p>'}}status.textContent='한국 시간 기준. 유입 경로는 브라우저별 하루 첫 방문 기준입니다.'}catch(error){document.querySelector('#visit-total').textContent='—';document.querySelector('#visit-today').textContent='—';dailyHost.innerHTML='';if(sourceHost)sourceHost.innerHTML='';status.textContent='방문 통계 조회에 실패했습니다. 관리자 권한과 DB 설정을 확인해 주세요.';status.classList.add('error')}}
+async function upload(file,folder){if(!file)return '';if(!file.type.startsWith('image/'))throw Error('이미지 파일만 업로드할 수 있습니다.');if(file.size>8*1024*1024)throw Error('이미지는 8MB 이하로 올려 주세요.');let safe=file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]/g,'-').slice(-90)||'image';let path=`${folder}/${crypto.randomUUID()}-${safe}`;let r=await fetch(`${url}/storage/v1/object/buja-media/${path}`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${token}`,'Content-Type':file.type,'x-upsert':'true'},body:file});if(!r.ok)throw Error(`이미지 업로드 실패: ${(await r.text()).slice(0,180)}`);return `${url}/storage/v1/object/public/buja-media/${path}`}
+async function handleUpload(inputId,formId,fieldName,messageId,folder){let input=document.getElementById(inputId);input.addEventListener('change',async()=>{let f=input.files?.[0];if(!f)return;setMessage(messageId,'이미지를 업로드하는 중입니다…');try{let link=await upload(f,folder);document.querySelector(`#${formId} [name="${fieldName}"]`).value=link;setMessage(messageId,'이미지를 업로드했습니다. 저장을 눌러 반영하세요.')}catch(e){setMessage(messageId,e.message,true)}finally{input.value=''}})}
+function switchPanel(id){document.querySelectorAll('.admin-panel').forEach(p=>p.hidden=p.id!==id);document.querySelectorAll('.admin-tab').forEach(b=>b.classList.toggle('active',b.dataset.panel===id))}
+async function showDashboard(){document.querySelector('#login-panel').hidden=true;document.querySelector('#dashboard').hidden=false;await Promise.all([refresh(),loadVisitStats()])}
+async function refresh(){try{[properties,posts,clients,developments]=await Promise.all([api('properties?select=*&order=created_at.desc'),api('blog_posts?select=*&order=updated_at.desc'),api('clients?select=*&order=created_at.desc'),api('developments?select=*&order=updated_at.desc')]);renderProperties();renderPosts();renderDevelopments();renderClients();if(window.blogFeedItems)renderBlogFeed(window.blogFeedItems);await renderInquiries();document.querySelector('#stat-properties').textContent=properties.length;document.querySelector('#stat-published').textContent=properties.filter(p=>p.is_public&&p.status==='published').length;let today=new Date().toISOString().slice(0,10);document.querySelector('#stat-followups').textContent=clients.filter(c=>c.next_contact_at&&c.next_contact_at.slice(0,10)<=today&&!['계약 완료','종료'].includes(c.status)).length}catch(e){setMessage('property-message',`데이터를 불러오지 못했습니다: ${e.message}`,true)}}
+function renderProperties(){document.querySelector('#admin-properties').innerHTML=properties.map(p=>`<tr><td>${esc(p.title)}${p.source_url?`<br><a href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>`:''}</td><td>${esc(p.property_type)} · ${esc(p.transaction_type)}</td><td>${esc(p.status)}</td><td>${p.is_public?'공개':'비공개'}</td><td><button data-edit-property="${esc(p.id)}">수정</button><button data-delete-property="${esc(p.id)}">삭제</button></td></tr>`).join('')||'<tr><td colspan="5">등록된 매물이 없습니다.</td></tr>'}
+function renderPosts(){document.querySelector('#admin-posts').innerHTML=posts.map(p=>`<tr><td>${esc(p.title)}${p.source_url?`<br><a href="${esc(p.source_url)}" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a>`:''}</td><td>${esc(p.category)}</td><td>${p.is_published?'공개':'비공개'}</td><td><button data-edit-post="${esc(p.id)}">수정</button><button data-delete-post="${esc(p.id)}">삭제</button></td></tr>`).join('')||'<tr><td colspan="4">게시글이 없습니다.</td></tr>'}
+function renderDevelopments(){document.querySelector('#admin-developments').innerHTML=developments.map(d=>`<tr><td>${esc(d.title)}</td><td>${esc(d.category)}</td><td>${esc(d.status)}</td><td>${d.is_public?'공개':'비공개'}</td><td><button data-edit-development="${esc(d.id)}">수정</button><button data-hide-development="${esc(d.id)}">비공개</button></td></tr>`).join('')||'<tr><td colspan="5">등록된 분양 정보가 없습니다.</td></tr>'}
+function resetDevelopment(){const f=document.querySelector('#development-form');f.reset();f.elements.id.value='';document.querySelector('#development-form-title').textContent='신규 분양 정보 등록';setMessage('development-message','')}
+function editDevelopment(d){const f=document.querySelector('#development-form');for(const[k,v]of Object.entries(d))if(f.elements[k]){if(f.elements[k].type==='checkbox')f.elements[k].checked=Boolean(v);else f.elements[k].value=v??''}document.querySelector('#development-form-title').textContent='신규 분양 정보 수정';switchPanel('developments-panel');scrollTo({top:0,behavior:'smooth'})}
+const PROPERTY_KINDS=['상가','토지','사무실','오피스텔','아파트','상가주택'];
+window.blogFeedItems=[];
+function renderBlogFeed(items){const host=document.querySelector('#blog-import-list');if(!host)return;host.innerHTML=items.map(p=>{const isProperty=PROPERTY_KINDS.includes(p.kind),importedProperty=properties.some(x=>x.naver_post_id===String(p.id)),importedPost=posts.some(x=>x.source_url===p.url||x.slug===`naver-${p.id}`),kind=isProperty?p.kind:'상가',date=p.publishedAt?new Date(p.publishedAt).toLocaleDateString('ko-KR'):'';return `<article class="admin-card" style="display:grid;grid-template-columns:minmax(90px,150px) 1fr;gap:16px;align-items:start"><img src="${esc(p.image||'')}" alt="" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;background:#f1f1ef" onerror="this.style.display='none'"><div><div class="admin-head"><b>${esc(p.title)}</b><span class="admin-status">${isProperty?'매물':'부동산 정보'} · ${esc(p.category||'')} · ${esc(date)}</span></div><p class="admin-help">${esc(p.summary||'요약 없음')}</p><p><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">네이버 원문 확인 ↗</a></p><div class="admin-actions">${isProperty?`<label>매물 유형 <select data-feed-kind="${esc(p.id)}">${PROPERTY_KINDS.map(k=>`<option ${k===kind?'selected':''}>${k}</option>`).join('')}</select></label><button type="button" data-import-property="${esc(p.id)}" ${importedProperty?'disabled':''}>${importedProperty?'매물 초안 가져옴':'매물 초안으로 가져오기'}</button>`:''}<button type="button" data-import-post="${esc(p.id)}" ${importedPost?'disabled':''}>${importedPost?'정보 글 가져옴':'정보 글 초안으로 가져오기'}</button></div></div></article>`}).join('')||'<p class="admin-help">RSS에서 확인된 글이 없습니다.</p>'}
+async function refreshBlogFeed(){const status=document.querySelector('#blog-import-message');status.textContent='네이버 블로그 새 글을 확인하고 있습니다…';try{const res=await fetch('/api/blog',{cache:'no-store'});if(!res.ok)throw Error(`RSS 조회 실패 (${res.status})`);const feed=await res.json();window.blogFeedItems=[...(feed.propertyPosts||[]),...(feed.newsPosts||[]),...(feed.infoPosts||[])];renderBlogFeed(window.blogFeedItems);status.textContent=`최근 게시글 ${window.blogFeedItems.length}개를 확인했습니다. 가져온 글은 비공개 초안으로 저장됩니다.`}catch(e){status.textContent=`블로그 글을 불러오지 못했습니다: ${e.message}. 설정 또는 데이터베이스 반영 여부를 확인해 주세요.`;status.classList.add('error')}}
+async function importFeedItem(id,target){const post=window.blogFeedItems.find(x=>String(x.id)===String(id));if(!post)return;const button=document.querySelector(`[data-import-${target}="${CSS.escape(String(id))}"]`);if(button)button.disabled=true;try{if(target==='property'){if(properties.some(p=>p.naver_post_id===String(post.id)))throw Error('이미 매물 초안으로 가져온 글입니다.');const type=document.querySelector(`[data-feed-kind="${CSS.escape(String(id))}"]`).value;await api('properties',{method:'POST',body:JSON.stringify({title:post.title,property_type:type,transaction_type:'정보 확인 필요',description:post.summary||null,image_url:post.image||null,source_url:post.url,naver_post_id:String(post.id),status:'preparing',is_public:false})})}else{if(posts.some(p=>p.source_url===post.url||p.slug===`naver-${post.id}`))throw Error('이미 게시글 초안으로 가져온 글입니다.');const category=post.kind==='정보'?'부동산 정보':(post.category||'검단신도시 소식');await api('blog_posts',{method:'POST',body:JSON.stringify({title:post.title,slug:`naver-${post.id}`,category,excerpt:post.summary||null,body:post.summary||post.title,cover_url:post.image||null,author:'검단 윤소장',seo_title:post.title,seo_description:post.summary||post.title,source_url:post.url,is_published:false,published_at:null})})}await refresh();setMessage('blog-import-message',target==='property'?'매물 초안을 가져왔습니다. 매매 유형, 가격, 면적 등 확인된 정보만 채우고 공개 여부를 결정해 주세요.':'정보 글 초안을 가져왔습니다. 본문을 보완하고 공개 여부를 직접 결정해 주세요.');renderBlogFeed(window.blogFeedItems)}catch(e){setMessage('blog-import-message',`가져오지 못했습니다: ${e.message}`,true);if(button)button.disabled=false}}
+function renderClients(){let csel=document.querySelector('#consult-client'),psel=document.querySelector('#consult-property');csel.innerHTML='<option value="">고객 선택</option>'+clients.map(c=>`<option value="${esc(c.id)}">${esc(c.name)} · ${esc(c.phone||'연락처 없음')}</option>`).join('');psel.innerHTML='<option value="">선택 안 함</option>'+properties.filter(p=>p.is_public&&p.status==='published').map(p=>`<option value="${esc(p.id)}">${esc(p.title)}</option>`).join('');let candidates=c=>{let d=c.desired_conditions||{};return properties.filter(p=>p.is_public&&p.status==='published'&&(!d.property_type||p.property_type===d.property_type)&&(!d.area||String(p.area||'').includes(d.area))&&(!d.budget_min||Number(p.price||p.deposit||p.rent||0)>=Number(d.budget_min))&&(!d.budget_max||Number(p.price||p.deposit||p.rent||0)<=Number(d.budget_max))&&(!d.area_m2||Number(p.area_m2||0)>=Number(d.area_m2))).slice(0,3)};document.querySelector('#admin-clients').innerHTML=clients.map(c=>{let d=c.desired_conditions||{},matches=candidates(c);return `<tr><td><b>${esc(c.name)}</b><br>${esc(c.phone||'')}<br>${esc(c.client_type||'')} · ${esc(c.source||'')}</td><td>${esc(d.property_type||'유형 미정')} · ${esc(d.area||'지역 미정')}<br>예산 ${esc(d.budget_min||'—')}~${esc(d.budget_max||'—')}만원 · ${esc(d.area_m2||'—')}㎡</td><td>${esc(c.status)}<br>${esc(c.next_contact_at?.slice(0,10)||'연락일 미정')}</td><td>${matches.map(p=>`<div>${esc(p.title)}</div>`).join('')||'조건 맞는 공개 매물 없음'}</td><td><button data-history="${esc(c.id)}">기록 보기</button></td><td><button data-edit-client="${esc(c.id)}">수정</button><button data-close-client="${esc(c.id)}">종료</button></td></tr>`}).join('')||'<tr><td colspan="6">등록된 고객이 없습니다.</td></tr>'}
+async function renderInquiries(){let list=await api('inquiries?select=id,created_at,request_type,name,phone,property_type,area,details,status,admin_note&order=created_at.desc');document.querySelector('#stat-inquiries').textContent=list.filter(i=>i.status==='신규 접수').length;document.querySelector('#admin-inquiries').innerHTML=list.map(i=>`<tr><td>${esc(new Date(i.created_at).toLocaleDateString('ko-KR'))}</td><td>${esc(i.name)}</td><td><a href="tel:${esc(i.phone)}">${esc(i.phone)}</a></td><td>${esc(i.request_type)}<br>${esc(i.property_type||'')} ${esc(i.area||'')}<br>${esc(i.details||'')}</td><td><select data-inquiry-status="${esc(i.id)}"><option ${i.status==='신규 접수'?'selected':''}>신규 접수</option><option ${i.status==='상담 예정'?'selected':''}>상담 예정</option><option ${i.status==='조건 확인 완료'?'selected':''}>조건 확인 완료</option><option ${i.status==='매물 제안 중'?'selected':''}>매물 제안 중</option><option ${i.status==='현장 안내 예정'?'selected':''}>현장 안내 예정</option><option ${i.status==='계약 협의 중'?'selected':''}>계약 협의 중</option><option ${i.status==='계약 완료'?'selected':''}>계약 완료</option><option ${i.status==='보류'?'selected':''}>보류</option><option ${i.status==='종료'?'selected':''}>종료</option></select><textarea data-inquiry-note="${esc(i.id)}" rows="2" placeholder="내부 메모">${esc(i.admin_note||'')}</textarea></td><td><button data-save-inquiry="${esc(i.id)}">저장</button></td></tr>`).join('')||'<tr><td colspan="6">접수된 문의가 없습니다.</td></tr>'}
+function resetProperty(){let f=document.querySelector('#property-form');f.reset();f.elements.id.value='';document.querySelector('#property-form-title').textContent='매물 등록';setMessage('property-message','')}
+function editProperty(p){let f=document.querySelector('#property-form');for(const [k,v]of Object.entries(p))if(f.elements[k]){if(f.elements[k].type==='checkbox')f.elements[k].checked=Boolean(v);else f.elements[k].value=v??''}document.querySelector('#property-form-title').textContent='매물 수정';switchPanel('properties-panel');scrollTo({top:0,behavior:'smooth'})}
+function resetPost(){let f=document.querySelector('#post-form');f.reset();f.elements.id.value='';f.elements.author.value='검단 윤소장';document.querySelector('#post-form-title').textContent='부동산 정보 글 작성';setMessage('post-message','')}
+function editPost(p){let f=document.querySelector('#post-form');for(const[k,v]of Object.entries(p))if(f.elements[k]){if(f.elements[k].type==='checkbox')f.elements[k].checked=Boolean(v);else f.elements[k].value=v??''}document.querySelector('#post-form-title').textContent='게시글 수정';switchPanel('posts-panel');scrollTo({top:0,behavior:'smooth'})}
+function resetClient(){let f=document.querySelector('#client-form');f.reset();f.elements.id.value='';document.querySelector('#client-form-title').textContent='고객 등록 및 조건 관리';setMessage('client-message','')}
+function editClient(c){let f=document.querySelector('#client-form'),d=c.desired_conditions||{};for(const[k,v]of Object.entries({id:c.id,name:c.name,phone:c.phone,client_type:c.client_type,source:c.source,desired_type:d.property_type,desired_area:d.area,budget_min:d.budget_min,budget_max:d.budget_max,area_m2:d.area_m2,status:c.status,next_contact_at:c.next_contact_at?.slice(0,10),assigned_to:c.assigned_to,admin_note:c.admin_note}))if(f.elements[k])f.elements[k].value=v??'';document.querySelector('#client-form-title').textContent='고객 정보 수정';switchPanel('clients-panel');scrollTo({top:0,behavior:'smooth'})}
+async function showClientHistory(id){let c=clients.find(x=>String(x.id)===id);try{let rows=await api(`consultations?select=*&client_id=eq.${encodeURIComponent(id)}&order=created_at.desc`);document.querySelector('#client-history').innerHTML=`<b>${esc(c?.name||'고객')} 상담 기록</b><br>`+(rows.map(x=>{let p=properties.find(y=>String(y.id)===String(x.property_id));return `${esc(new Date(x.created_at).toLocaleString('ko-KR'))} · ${esc(x.note)}${p?` · 매물: ${esc(p.title)}`:''}`}).join('<br>')||'기록이 없습니다.') }catch(e){setMessage('consult-message',`상담 기록 조회 실패: ${e.message}`,true)}}
+function slugify(value){return value.toLowerCase().trim().replace(/[^a-z0-9가-힣]+/g,'-').replace(/^-|-$/g,'')||`post-${crypto.randomUUID().slice(0,12)}`}
+document.querySelectorAll('.admin-tab').forEach(b=>b.addEventListener('click',()=>switchPanel(b.dataset.panel)));
+document.querySelector('#refresh-blog-feed').addEventListener('click',refreshBlogFeed);
+document.querySelector('#blog-import-list').addEventListener('click',async e=>{const id=e.target.dataset.importProperty||e.target.dataset.importPost;if(!id)return;await importFeedItem(id,e.target.dataset.importProperty?'property':'post')});
+document.querySelector('#development-form').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,d=Object.fromEntries(new FormData(f)),id=d.id;delete d.id;d.is_public=f.elements.is_public.checked;if(d.status==='비공개')d.is_public=false;for(const k of ['location','supply_scale','area_info','price_info','schedule','description','image_url','source_url'])if(!d[k])d[k]=null;try{if(id)await api(`developments?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(d)});else await api('developments',{method:'POST',body:JSON.stringify(d)});resetDevelopment();setMessage('development-message','분양 정보를 저장했습니다.');await refresh()}catch(err){setMessage('development-message',`저장 실패: ${err.message}`,true)}});
+document.querySelector('#admin-developments').addEventListener('click',async e=>{const id=e.target.dataset.editDevelopment||e.target.dataset.hideDevelopment;if(!id)return;if(e.target.dataset.editDevelopment){editDevelopment(developments.find(d=>String(d.id)===id));return}if(confirm('이 분양 정보를 비공개로 바꿀까요? 데이터는 삭제되지 않습니다.'))try{await api(`developments?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({is_public:false,status:'비공개'})});await refresh()}catch(err){setMessage('development-message',`변경 실패: ${err.message}`,true)}});
+handleUpload('property-image-file','property-form','image_url','property-message','properties');handleUpload('post-image-file','post-form','cover_url','post-message','posts');
+document.querySelector('#login-form').addEventListener('submit',async e=>{e.preventDefault();if(!url||!key){setMessage('login-message','config.js에 Supabase Project URL과 publishable/anon 공개 키를 설정해 주세요.',true);return}let d=Object.fromEntries(new FormData(e.currentTarget));try{let r=await fetch(`${url}/auth/v1/token?grant_type=password`,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({email:d.email,password:d.password})});let j=await r.json();if(!r.ok)throw Error(j.msg||j.message||'로그인에 실패했습니다.');if(j.user?.app_metadata?.role!=='admin')throw Error('이 계정에는 관리자 권한이 없습니다.');token=j.access_token;adminUserId=j.user.id;sessionStorage.setItem('buja_admin_access',token);await showDashboard()}catch(err){setMessage('login-message',err.message,true)}});
+document.querySelector('#property-form').addEventListener('submit',async e=>{e.preventDefault();let f=e.currentTarget,d=Object.fromEntries(new FormData(f)),id=d.id;delete d.id;d.is_public=f.elements.is_public.checked;if(d.is_public&&d.transaction_type==='정보 확인 필요'){setMessage('property-message','공개하기 전에 거래 유형을 실제 정보에 맞게 선택해 주세요.',true);return}for(const n of ['area_m2','contract_area_m2','price','deposit','rent','maintenance_fee'])d[n]=d[n]?Number(d[n]):null;for(const n of ['floor','area','building_name','image_url','description','available_date','recommended_business','parking','internal_note','source_url','naver_post_id'])if(!d[n])d[n]=null;try{if(id)await api(`properties?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(d)});else await api('properties',{method:'POST',body:JSON.stringify(d)});resetProperty();setMessage('property-message','매물을 저장했습니다.');await refresh()}catch(err){setMessage('property-message',`저장 실패: ${err.message}`,true)}});
+document.querySelector('#post-form').addEventListener('submit',async e=>{e.preventDefault();let f=e.currentTarget,d=Object.fromEntries(new FormData(f)),id=d.id;delete d.id;d.is_published=f.elements.is_published.checked;d.slug=slugify(d.slug||d.title);d.published_at=d.is_published?(posts.find(p=>p.id===id)?.published_at||new Date().toISOString()):null;if(!d.seo_title)d.seo_title=d.title;if(!d.seo_description)d.seo_description=d.excerpt||d.title;if(!d.source_url)d.source_url=null;try{if(id)await api(`blog_posts?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(d)});else await api('blog_posts',{method:'POST',body:JSON.stringify(d)});resetPost();setMessage('post-message','게시글을 저장했습니다.');await refresh()}catch(err){setMessage('post-message',`저장 실패: ${err.message}`,true)}});
+document.querySelector('#client-form').addEventListener('submit',async e=>{e.preventDefault();let f=e.currentTarget,d=Object.fromEntries(new FormData(f)),id=d.id;delete d.id;d.desired_conditions={property_type:d.desired_type||null,area:d.desired_area||null,budget_min:d.budget_min?Number(d.budget_min):null,budget_max:d.budget_max?Number(d.budget_max):null,area_m2:d.area_m2?Number(d.area_m2):null};delete d.desired_type;delete d.desired_area;for(const k of ['budget_min','budget_max','area_m2'])delete d[k];d.next_contact_at=d.next_contact_at?new Date(`${d.next_contact_at}T09:00:00`).toISOString():null;for(const k of ['phone','source','assigned_to','admin_note'])if(!d[k])d[k]=null;try{if(id)await api(`clients?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(d)});else await api('clients',{method:'POST',body:JSON.stringify(d)});resetClient();setMessage('client-message','고객 정보를 저장했습니다.');await refresh()}catch(err){setMessage('client-message',`저장 실패: ${err.message}`,true)}});
+document.querySelector('#consultation-form').addEventListener('submit',async e=>{e.preventDefault();let f=e.currentTarget,d=Object.fromEntries(new FormData(f));d.property_id=d.property_id||null;d.created_by=adminUserId;try{await api('consultations',{method:'POST',body:JSON.stringify(d)});f.reset();setMessage('consult-message','상담 기록을 저장했습니다.');await showClientHistory(d.client_id)}catch(err){setMessage('consult-message',`저장 실패: ${err.message}`,true)}});
+document.querySelector('#admin-properties').addEventListener('click',async e=>{let id=e.target.dataset.editProperty||e.target.dataset.deleteProperty;if(!id)return;let p=properties.find(x=>String(x.id)===id);if(e.target.dataset.editProperty)editProperty(p);else if(confirm(`“${p.title}” 매물을 삭제할까요?`)){try{await api(`properties?id=eq.${encodeURIComponent(id)}`,{method:'DELETE'});await refresh()}catch(err){setMessage('property-message',`삭제 실패: ${err.message}`,true)}}});
+document.querySelector('#admin-posts').addEventListener('click',async e=>{let id=e.target.dataset.editPost||e.target.dataset.deletePost;if(!id)return;let p=posts.find(x=>String(x.id)===id);if(e.target.dataset.editPost)editPost(p);else if(confirm(`“${p.title}” 게시글을 삭제할까요?`)){try{await api(`blog_posts?id=eq.${encodeURIComponent(id)}`,{method:'DELETE'});await refresh()}catch(err){setMessage('post-message',`삭제 실패: ${err.message}`,true)}}});
+document.querySelector('#admin-clients').addEventListener('click',async e=>{let id=e.target.dataset.editClient||e.target.dataset.history||e.target.dataset.closeClient;if(!id)return;if(e.target.dataset.editClient)editClient(clients.find(c=>String(c.id)===id));else if(e.target.dataset.history)await showClientHistory(id);else if(confirm('이 고객 관리를 종료 상태로 변경할까요?')){try{await api(`clients?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status:'종료'})});await refresh()}catch(err){setMessage('client-message',`상태 변경 실패: ${err.message}`,true)}}});
+document.querySelector('#admin-inquiries').addEventListener('click',async e=>{let id=e.target.dataset.saveInquiry;if(!id)return;let status=document.querySelector(`[data-inquiry-status="${CSS.escape(id)}"]`).value,note=document.querySelector(`[data-inquiry-note="${CSS.escape(id)}"]`).value;try{await api(`inquiries?id=eq.${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status,admin_note:note})});await refreshInquiriesOnly()}catch(err){setMessage('property-message',`문의 업데이트 실패: ${err.message}`,true)}});
+async function refreshInquiriesOnly(){await renderInquiries()}
+document.querySelector('#reset-property').addEventListener('click',resetProperty);document.querySelector('#reset-development').addEventListener('click',resetDevelopment);document.querySelector('#reset-post').addEventListener('click',resetPost);document.querySelector('#reset-client').addEventListener('click',resetClient);
+document.querySelector('#logout').addEventListener('click',async()=>{try{await fetch(`${url}/auth/v1/logout`,{method:'POST',headers:{apikey:key,Authorization:`Bearer ${token}`}})}catch{}token='';sessionStorage.removeItem('buja_admin_access');document.querySelector('#dashboard').hidden=true;document.querySelector('#login-panel').hidden=false;resetProperty();resetPost()});
+if(!url||!key){setMessage('login-message','config.js에 Supabase Project URL과 publishable/anon 공개 키를 입력해야 실제 로그인을 사용할 수 있습니다.',true)}else{let saved=sessionStorage.getItem('buja_admin_access');if(saved){token=saved;fetch(`${url}/auth/v1/user`,{headers:{apikey:key,Authorization:`Bearer ${token}`}}).then(r=>r.ok?r.json():null).then(u=>{if(u?.app_metadata?.role==='admin'){adminUserId=u.id;showDashboard()}else{token='';sessionStorage.removeItem('buja_admin_access')}}).catch(()=>{token='';sessionStorage.removeItem('buja_admin_access')})}}
 
-create or replace function public.touch_updated_at() returns trigger language plpgsql as $$
-begin new.updated_at=now(); return new; end $$;
-drop trigger if exists properties_touch_updated on public.properties;
-create trigger properties_touch_updated before update on public.properties for each row execute function public.touch_updated_at();
-drop trigger if exists blog_posts_touch_updated on public.blog_posts;
-create trigger blog_posts_touch_updated before update on public.blog_posts for each row execute function public.touch_updated_at();
-drop trigger if exists developments_touch_updated on public.developments;
-create trigger developments_touch_updated before update on public.developments for each row execute function public.touch_updated_at();
-
-insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-values('buja-media','buja-media',true,8388608,array['image/jpeg','image/png','image/webp','image/gif'])
-on conflict(id) do update set public=true,file_size_limit=8388608,allowed_mime_types=excluded.allowed_mime_types;
-drop policy if exists "public reads buja media" on storage.objects;
-create policy "public reads buja media" on storage.objects for select to anon,authenticated using(bucket_id='buja-media');
-drop policy if exists "admins upload buja media" on storage.objects;
-create policy "admins upload buja media" on storage.objects for insert to authenticated with check(bucket_id='buja-media' and public.is_buja_admin());
-drop policy if exists "admins update buja media" on storage.objects;
-create policy "admins update buja media" on storage.objects for update to authenticated using(bucket_id='buja-media' and public.is_buja_admin()) with check(bucket_id='buja-media' and public.is_buja_admin());
-drop policy if exists "admins delete buja media" on storage.objects;
-create policy "admins delete buja media" on storage.objects for delete to authenticated using(bucket_id='buja-media' and public.is_buja_admin());
-
--- Admin-only anonymous website visit statistics.
-create table if not exists public.site_visits (
-  visitor_id uuid not null,
-  first_seen_at timestamptz not null default now(),
-  visit_date date generated always as ((first_seen_at at time zone 'Asia/Seoul')::date) stored,
-  constraint site_visits_visitor_day_unique unique (visitor_id, visit_date)
-);
-create index if not exists site_visits_visit_date_idx on public.site_visits (visit_date);
-
-alter table public.site_visits enable row level security;
-revoke all on table public.site_visits from public, anon, authenticated;
-grant insert (visitor_id) on table public.site_visits to anon, authenticated;
-
-create table if not exists public.site_visit_daily (
-  visit_date date primary key,
-  visitors bigint not null default 0 check (visitors >= 0)
-);
-revoke all on table public.site_visit_daily from public, anon, authenticated;
-
-drop policy if exists "record anonymous site visits" on public.site_visits;
-create policy "record anonymous site visits"
-  on public.site_visits for insert to anon, authenticated
-  with check (visitor_id is not null);
-
-create or replace function public.aggregate_site_visit()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  insert into public.site_visit_daily (visit_date, visitors)
-  values (new.visit_date, 1)
-  on conflict (visit_date) do update
-    set visitors = public.site_visit_daily.visitors + 1;
-
-  delete from public.site_visits
-  where visit_date < ((now() at time zone 'Asia/Seoul')::date - interval '13 months')::date;
-
-  return new;
-end;
-$$;
-
-revoke all on function public.aggregate_site_visit() from public, anon, authenticated;
-drop trigger if exists aggregate_site_visit on public.site_visits;
-create trigger aggregate_site_visit
-  after insert on public.site_visits
-  for each row execute function public.aggregate_site_visit();
-
-create or replace function public.get_admin_visit_stats()
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  today_kst date := (now() at time zone 'Asia/Seoul')::date;
-  result jsonb;
-begin
-  if coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'admin' then
-    raise exception 'Administrator access required' using errcode = '42501';
-  end if;
-
-  select jsonb_build_object(
-    'total_visits', (select coalesce(sum(visitors), 0) from public.site_visit_daily),
-    'today_unique', (select coalesce(visitors, 0) from public.site_visit_daily where visit_date = today_kst),
-    'daily', (
-      select coalesce(
-        jsonb_agg(jsonb_build_object('date', to_char(days.day, 'YYYY-MM-DD'), 'visitors', coalesce(visits.visitors, 0)) order by days.day desc),
-        '[]'::jsonb
-      )
-      from generate_series((today_kst - 6)::timestamp, today_kst::timestamp, interval '1 day') as days(day)
-      left join public.site_visit_daily as visits on visits.visit_date = days.day::date
-    )
-  ) into result;
-
-  return result;
-end;
-$$;
-
-revoke all on function public.get_admin_visit_stats() from public, anon;
-grant execute on function public.get_admin_visit_stats() to authenticated;
-
-
--- Classify daily unique visits by a safe, coarse external source category.
-alter table public.site_visits
-  add column if not exists referrer_source text not null default 'direct'
-  check (referrer_source in ('direct','naver','google','youtube','instagram','kakao','other'));
-
-grant insert (visitor_id, referrer_source) on table public.site_visits to anon, authenticated;
-
-create table if not exists public.site_visit_source_daily (
-  visit_date date not null,
-  referrer_source text not null check (referrer_source in ('direct','naver','google','youtube','instagram','kakao','other')),
-  visitors bigint not null default 0 check (visitors >= 0),
-  primary key (visit_date, referrer_source)
-);
-revoke all on table public.site_visit_source_daily from public, anon, authenticated;
-
-create or replace function public.aggregate_site_visit()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  insert into public.site_visit_daily (visit_date, visitors)
-  values (new.visit_date, 1)
-  on conflict (visit_date) do update
-    set visitors = public.site_visit_daily.visitors + 1;
-
-  insert into public.site_visit_source_daily (visit_date, referrer_source, visitors)
-  values (new.visit_date, new.referrer_source, 1)
-  on conflict (visit_date, referrer_source) do update
-    set visitors = public.site_visit_source_daily.visitors + 1;
-
-  delete from public.site_visits
-  where visit_date < ((now() at time zone 'Asia/Seoul')::date - interval '13 months')::date;
-  return new;
-end;
-$$;
-
-create or replace function public.get_admin_visit_stats()
-returns jsonb
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  today_kst date := (now() at time zone 'Asia/Seoul')::date;
-  result jsonb;
-begin
-  if coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') <> 'admin' then
-    raise exception 'Administrator access required' using errcode = '42501';
-  end if;
-
-  select jsonb_build_object(
-    'total_visits', (select coalesce(sum(visitors), 0) from public.site_visit_daily),
-    'today_unique', (select coalesce(visitors, 0) from public.site_visit_daily where visit_date = today_kst),
-    'daily', (
-      select coalesce(jsonb_agg(jsonb_build_object('date', to_char(days.day, 'YYYY-MM-DD'), 'visitors', coalesce(visits.visitors, 0)) order by days.day desc), '[]'::jsonb)
-      from generate_series((today_kst - 6)::timestamp, today_kst::timestamp, interval '1 day') as days(day)
-      left join public.site_visit_daily as visits on visits.visit_date = days.day::date
-    ),
-    'sources_today', (
-      select coalesce(jsonb_agg(jsonb_build_object('source', referrer_source, 'visitors', visitors) order by visitors desc, referrer_source), '[]'::jsonb)
-      from public.site_visit_source_daily where visit_date = today_kst
-    )
-  ) into result;
-  return result;
-end;
-$$;
-revoke all on function public.get_admin_visit_stats() from public, anon;
-grant execute on function public.get_admin_visit_stats() to authenticated;
+document.querySelector('#refresh-visit-stats')?.addEventListener('click',loadVisitStats);
