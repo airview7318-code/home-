@@ -26,7 +26,37 @@ function showProperty(p){let d=document.createElement('dialog');d.innerHTML=`<di
 async function loadListings(){if(!CONFIG.supabaseUrl||!CONFIG.supabaseAnonKey){document.querySelector('#data-note').textContent='블로그 카드는 소개 글로 연결됩니다. 거래 가능 여부와 최신 조건은 원문에서 확인해 주세요. 금액·면적 필터는 홈페이지 등록 매물에 적용됩니다.';render();return}try{let res=await fetch(`${CONFIG.supabaseUrl}/rest/v1/properties_public?select=*&order=created_at.desc`,{headers:{apikey:CONFIG.supabaseAnonKey,Authorization:`Bearer ${CONFIG.supabaseAnonKey}`}});if(!res.ok)throw Error('매물 정보를 가져오지 못했습니다.');properties=await res.json();document.querySelector('#data-note').textContent='블로그 카드는 소개 글로 연결됩니다. 거래 가능 여부와 최신 조건은 원문에서 확인해 주세요. 금액·면적 필터는 홈페이지 등록 매물에 적용됩니다.'}catch(e){document.querySelector('#data-note').textContent='매물 정보를 불러오지 못했습니다. 블로그 소개 글은 네이버 원문에서 확인해 주세요.'}render()}
 function blogTrade(title,summary){const text=`${title} ${summary}`;if(/매매|매도/.test(text))return '매매';if(/전세/.test(text))return '전세';if(/월세|임대|임차|양도양수/.test(text))return '월세';return ''}
 async function loadBlogFeed(){try{const response=await fetch('/api/blog',{cache:'no-store'});if(!response.ok)throw Error(`RSS ${response.status}`);const feed=await response.json();const posts=(feed.propertyPosts||[]).map(post=>{const text=`${post.title} ${post.summary||''}`,district=text.match(/아라동|원당동|당하동|불로동/)?.[0]||'';return {...post,place:district?`${district} · ${post.kind}`:`검단신도시 · ${post.kind}`,trade:blogTrade(post.title,post.summary||''),keywords:`${post.category||''} ${post.title}`,imageAlt:`${post.title} · 네이버 블로그 대표 이미지`}});if(posts.length)BLOG_POSTS=posts;const note=document.querySelector('#data-note');if(note)note.textContent=posts.length?'네이버 블로그의 최신 공개 매물 글을 자동으로 불러옵니다. 현재 거래 가능 여부와 조건은 원문에서 확인해 주세요. 홈페이지 등록 매물은 관리자 공개 설정 후 별도로 표시됩니다.':'네이버 블로그에서 매물 소개 글을 찾지 못했습니다. 기존 소개 글을 표시합니다.';render()}catch(error){const note=document.querySelector('#data-note');if(note)note.textContent='네이버 블로그 자동 연동이 잠시 지연되어 최근 소개 글을 표시합니다. 거래 가능 여부와 최신 조건은 원문에서 확인해 주세요.'}}
-function initPublicInquiry(){const form=document.querySelector('#public-inquiry-form');if(!form)return;const talkUrl='https://talk.naver.com/ct/w5wbcy';const status=document.querySelector('#inquiry-message'),fallback=document.querySelector('#talktalk-copy-fallback'),preview=document.querySelector('#talktalk-message-preview'),copyButton=document.querySelector('#talktalk-copy-button');form.addEventListener('submit',async event=>{event.preventDefault();if(!form.reportValidity())return;const data=new FormData(form);const lines=['[부자부동산 상담 요청]','요청 유형: '+data.get('request_type'),'부동산 종류: '+data.get('property_type'),'성함: '+String(data.get('name')||'').trim(),'연락처: '+String(data.get('phone')||'').trim(),'희망 지역: '+String(data.get('area')||'').trim(),'요청 내용: '+String(data.get('details')||'').trim()];const message=lines.join('\n');preview.value=message;window.open(talkUrl,'_blank','noopener,noreferrer');window.bujaTrack?.('talktalk_consultation_open');status.classList.remove('error');status.textContent='';try{await navigator.clipboard.writeText(message);fallback.hidden=true;status.textContent='상담 내용을 복사했습니다. 네이버 톡톡에 붙여넣고 전송해 주세요. 톡톡이 열리지 않으면 아래 링크를 눌러 주세요.'}catch(error){fallback.hidden=false;preview.focus();preview.select();status.textContent='자동 복사 권한이 없어 상담 내용을 아래에 표시했습니다. 복사한 뒤 네이버 톡톡에 붙여넣어 주세요.'}});copyButton?.addEventListener('click',async()=>{preview.focus();preview.select();try{await navigator.clipboard.writeText(preview.value);status.textContent='상담 내용을 복사했습니다. 톡톡에 붙여넣고 전송해 주세요.'}catch(error){document.execCommand('copy');status.textContent='상담 내용을 복사했습니다. 톡톡에 붙여넣고 전송해 주세요.'}})}
+function initPublicInquiry(){
+  const form=document.querySelector('#public-inquiry-form');
+  if(!form)return;
+  const status=document.querySelector('#inquiry-message');
+  const button=form.querySelector('[type="submit"]');
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    if(form.elements.company.value)return;
+    if(!CONFIG.supabaseUrl||!CONFIG.supabaseAnonKey){status.textContent='접수 연결을 확인할 수 없습니다. 전화 또는 네이버 톡톡으로 문의해 주세요.';status.classList.add('error');return}
+    const data=new FormData(form);
+    const payload={request_type:String(data.get('request_type')||''),name:String(data.get('name')||'').trim(),phone:String(data.get('phone')||'').trim(),property_type:String(data.get('property_type')||''),area:String(data.get('area')||'').trim(),details:String(data.get('details')||'').trim(),consent:form.elements.consent.checked};
+    const validTypes=['매물 접수','찾는 매물','일반 문의'];
+    const validProperties=['상가','상가주택','토지','오피스텔','사무실','아파트','기타'];
+    if(!validTypes.includes(payload.request_type)||!validProperties.includes(payload.property_type)||payload.name.length<1||payload.name.length>80||payload.phone.length<7||payload.phone.length>30||!/^[0-9+() -]{7,30}$/.test(payload.phone)||payload.details.length<1||payload.details.length>2000||!payload.consent){status.textContent='입력 내용을 확인해 주세요.';status.classList.add('error');return}
+    button.disabled=true;
+    status.classList.remove('error');
+    status.textContent='상담 내용을 접수하고 있습니다…';
+    try{
+      const response=await fetch(`${CONFIG.supabaseUrl.replace(/\/+$/,'')}/rest/v1/inquiries`,{method:'POST',headers:{apikey:CONFIG.supabaseAnonKey,Authorization:`Bearer ${CONFIG.supabaseAnonKey}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
+      if(!response.ok)throw new Error((await response.text()).slice(0,240)||`접수 실패 (${response.status})`);
+      window.bujaTrack?.('generate_lead',{request_type:payload.request_type,property_type:payload.property_type});
+      form.reset();
+      status.textContent='상담 접수가 완료되었습니다. 새 접수 알림은 등록된 이메일로 전송되며, 상세 내용은 관리자 센터에서 확인할 수 있습니다.';
+    }catch(error){
+      console.error('Public inquiry submission failed:',error.message);
+      status.textContent='접수되지 않았습니다. 잠시 후 다시 시도하거나 전화로 문의해 주세요.';
+      status.classList.add('error');
+    }finally{button.disabled=false}
+  });
+}
 initPublicInquiry();
 document.querySelectorAll('.chip').forEach(btn=>btn.addEventListener('click',()=>{document.querySelector('.chip.active')?.classList.remove('active');btn.classList.add('active');activeKind=btn.dataset.kind;BLOG_PAGE=1;render()}));document.querySelector('#sort-select').addEventListener('change',render);
 document.querySelectorAll('#property-search,#area-filter,#trade-filter,#price-min,#price-max,#area-min,#floor-filter,#parking-filter').forEach(el=>{el.addEventListener('input',()=>{BLOG_PAGE=1;render()});el.addEventListener('change',()=>{BLOG_PAGE=1;render()})});
@@ -34,3 +64,4 @@ document.querySelector('.menu-toggle').addEventListener('click',()=>document.que
 
 
 loadListings().finally(loadBlogFeed);
+
