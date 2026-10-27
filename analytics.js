@@ -33,6 +33,7 @@
     const href=link.getAttribute('href')||'';
     let method='';
     if(/^tel:/i.test(href)) method='phone';
+    else if(/talk\.naver\.com/i.test(href)) method='naver_talktalk';
     else if(/open\.kakao\.com/i.test(href)) method='kakao';
     else if(/(?:map\.naver\.com\/p\/entry\/place|naver\.me\/|place\.map\.kakao\.com)/i.test(href)) method='place';
     if(method) window.bujaTrack('contact_click',{method});
