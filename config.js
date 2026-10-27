@@ -5,7 +5,7 @@ window.BUJA_CONFIG={
   officeRegistrationNumber:'제28260-2024-00008호',
   kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
   talktalkUrl:'https://talk.naver.com/ct/w5wbcy',
-  talktalkBridgeEnabled:true,
+  talktalkBridgeEnabled:false,
   naverUrl:'https://naver.me/F0z9zmWA',
   naverMapsClientId:'gpy2dm1cex',
   kakaoMapUrl:'https://place.map.kakao.com/1218078714',
