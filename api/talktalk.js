@@ -65,10 +65,49 @@ function formatInquiry(inquiry) {
     '성함: ' + inquiry.name,
     '연락처: ' + inquiry.phone,
     '희망 지역: ' + (inquiry.area || '미입력'),
-    '요청 내용: ' + details,
-    '',
-    '아래 버튼을 누르면 사무소에 상담 요청이 전달됩니다.'
+    '요청 내용: ' + details
   ].join('\n').slice(0, 940);
+}
+
+async function sendInquiryToOffice(user, inquiry) {
+  const authorization = process.env.NAVER_TALKTALK_AUTHORIZATION;
+  if (!authorization) throw new Error('TalkTalk send API authorization is not configured');
+  const endpoint = 'https://gw.talk.naver.com/chatbot/v1/event';
+  const headers = {
+    Authorization: authorization,
+    'Content-Type': 'application/json;charset=UTF-8'
+  };
+  const sendResponse = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      event: 'send',
+      user,
+      partner: 'w5wrv7',
+      textContent: { text: formatInquiry(inquiry) }
+    }),
+    signal: AbortSignal.timeout(2200)
+  });
+  const sendResult = await sendResponse.json().catch(() => ({}));
+  if (!sendResponse.ok || sendResult.success !== true || sendResult.resultCode !== '00') {
+    throw new Error(`TalkTalk message delivery failed (${sendResponse.status}, ${sendResult.resultCode || 'no result code'})`);
+  }
+
+  const handoverResponse = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      event: 'handover',
+      user,
+      partner: 'w5wrv7',
+      options: { control: 'passThread', targetId: 1 }
+    }),
+    signal: AbortSignal.timeout(2200)
+  });
+  const handoverResult = await handoverResponse.json().catch(() => ({}));
+  if (!handoverResponse.ok || handoverResult.success !== true || handoverResult.resultCode !== '00') {
+    throw new Error(`TalkTalk handover failed (${handoverResponse.status}, ${handoverResult.resultCode || 'no result code'})`);
+  }
 }
 
 async function findPending(token) {
@@ -88,44 +127,32 @@ async function sendInquiryCard(res, row, token, user) {
       if (!refreshed || refreshed.status !== 'prompted' || !sameSecret(refreshed.user_hash, fingerprint)) return reply(res, 200, { success: true });
       row = refreshed;
     } else row = claimed[0];
-  } else if (row.status !== 'prompted' || !sameSecret(row.user_hash, fingerprint)) {
+  } else if (row.status === 'prompted' && sameSecret(row.user_hash, fingerprint)) {
+    return reply(res, 200, { success: true });
+  } else {
     return reply(res, 200, { success: true });
   }
 
   const inquiry = decrypt(row);
-  await supabase(`inquiries?talktalk_token=eq.${encodeURIComponent(token)}&talktalk_consent=eq.true`, 'PATCH', {
-    talktalk_delivery_status: '톡톡 확인 대기'
-  });
-  return reply(res, 200, {
-    event: 'send',
-    compositeContent: {
-      compositeList: [{
-        title: '홈페이지 상담 접수',
-        description: formatInquiry(inquiry),
-        buttonList: [{
-          type: 'TEXT',
-          data: { title: '위 조건으로 상담 요청', code: token }
-        }]
-      }]
-    }
-  });
-}
-
-async function confirmInquiry(event, res) {
-  const token = String(event.textContent?.code || '');
-  const user = event.user;
-  if (!/^[0-9a-f-]{36}$/i.test(token) || typeof user !== 'string' || user.length > 160 || event.textContent?.inputType !== 'button') {
-    return reply(res, 200, { success: true });
+  try {
+    await sendInquiryToOffice(user, inquiry);
+  } catch (error) {
+    await supabase(`talktalk_pending?token=eq.${encodeURIComponent(token)}&status=eq.prompted`, 'PATCH', {
+      status: 'ready',
+      user_hash: null
+    }).catch(() => {});
+    await supabase(`inquiries?talktalk_token=eq.${encodeURIComponent(token)}&talktalk_consent=eq.true`, 'PATCH', {
+      talktalk_delivery_status: '톡톡 전달 실패'
+    }).catch(() => {});
+    throw error;
   }
-  const row = await findPending(token);
-  if (!row || row.status !== 'prompted' || !sameSecret(row.user_hash, userHash(user))) return reply(res, 200, { success: true });
-
   await supabase(`inquiries?talktalk_token=eq.${encodeURIComponent(token)}&talktalk_consent=eq.true`, 'PATCH', {
-    talktalk_delivery_status: '상담 요청 완료',
+    talktalk_delivery_status: '톡톡 상담함 전달 완료',
     talktalk_sent_at: new Date().toISOString()
   });
-  await supabase(`talktalk_pending?token=eq.${encodeURIComponent(token)}`, 'DELETE');
-  return reply(res, 200, { success: true });
+  return reply(res, 200, {
+    success: true
+  });
 }
 
 module.exports = async function talktalkWebhook(req, res) {
@@ -150,7 +177,7 @@ module.exports = async function talktalkWebhook(req, res) {
       return await sendInquiryCard(res, row, token, user);
     }
 
-    if (event.event === 'send') return await confirmInquiry(event, res);
+    if (event.event === 'send') return reply(res, 200, { success: true });
     return reply(res, 200, { success: true });
   } catch (error) {
     console.error('TalkTalk inquiry webhook failed:', error.message);

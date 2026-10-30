@@ -1,4 +1,4 @@
-const CONFIG={supabaseUrl:window.BUJA_CONFIG?.supabaseUrl||'',supabaseAnonKey:window.BUJA_CONFIG?.supabaseAnonKey||'',phone:(window.BUJA_CONFIG?.officePhone||'032-566-8949').replace(/[^\d+]/g,''),officeRegistrationNumber:String(window.BUJA_CONFIG?.officeRegistrationNumber||'').trim(),kakao:window.BUJA_CONFIG?.kakaoUrl||'https://open.kakao.com/o/saJVu9Si',naver:window.BUJA_CONFIG?.naverUrl||'https://naver.me/F0z9zmWA',talktalk:window.BUJA_CONFIG?.talktalkUrl||'https://talk.naver.com/ct/w5wbcy',talktalkBridgeEnabled:window.BUJA_CONFIG?.talktalkBridgeEnabled===true,kakaoMap:window.BUJA_CONFIG?.kakaoMapUrl||'https://place.map.kakao.com/1218078714',naverMapsClientId:window.BUJA_CONFIG?.naverMapsClientId||''};
+const CONFIG={supabaseUrl:window.BUJA_CONFIG?.supabaseUrl||'',supabaseAnonKey:window.BUJA_CONFIG?.supabaseAnonKey||'',phone:(window.BUJA_CONFIG?.officePhone||'032-566-8949').replace(/[^\d+]/g,''),officeRegistrationNumber:String(window.BUJA_CONFIG?.officeRegistrationNumber||'').trim(),kakao:window.BUJA_CONFIG?.kakaoUrl||'https://open.kakao.com/o/saJVu9Si',naver:window.BUJA_CONFIG?.naverUrl||'https://naver.me/F0z9zmWA',talktalk:window.BUJA_CONFIG?.talktalkUrl||'https://talk.naver.com/W5WRV7',talktalkBridgeEnabled:window.BUJA_CONFIG?.talktalkBridgeEnabled===true,kakaoMap:window.BUJA_CONFIG?.kakaoMapUrl||'https://place.map.kakao.com/1218078714',naverMapsClientId:window.BUJA_CONFIG?.naverMapsClientId||''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const grid=document.querySelector('#property-grid');let properties=[];let activeKind='전체';document.querySelectorAll('a[href="tel:0325668949"]').forEach(a=>a.href=`tel:${CONFIG.phone}`);document.querySelectorAll(`a[href="${CONFIG.kakao}"]`).forEach(a=>a.href=CONFIG.kakao);document.querySelectorAll(`a[href="${CONFIG.naver}"]`).forEach(a=>a.href=CONFIG.naver);document.querySelectorAll(`a[href="${CONFIG.kakaoMap}"]`).forEach(a=>a.href=CONFIG.kakaoMap);
 const registrationNode=document.querySelector('#office-registration');if(registrationNode&&CONFIG.officeRegistrationNumber){registrationNode.textContent=`중개사무소 등록번호 · ${CONFIG.officeRegistrationNumber}`;registrationNode.hidden=false}
@@ -34,7 +34,7 @@ function initPublicInquiry(){
   const talkConsent=form.elements.talktalk_consent;
   const talkConsentLabel=talkConsent?.closest('.inquiry-consent');
   if(talkConsentLabel)talkConsentLabel.style.display=CONFIG.talktalkBridgeEnabled?'':'none';
-  if(talkConsentLabel)talkConsentLabel.querySelector('span').textContent='선택 동의: 작성하신 상담 정보를 암호화해 최대 15분간 임시 보관한 뒤 네이버 톡톡 대화창으로 전달합니다. 대화창에서 ‘위 조건으로 상담 요청’을 누르면 사무소 톡톡 상담함에 요청이 전달됩니다. 톡톡에 전달된 정보는 네이버 대화에 남을 수 있습니다.';
+  if(talkConsentLabel)talkConsentLabel.querySelector('span').textContent='선택 동의: 작성하신 상담 정보를 암호화해 최대 15분간 임시 보관한 뒤 네이버 톡톡 대화에 표시하고 사무소 상담함에 전달합니다. 톡톡에 전달된 정보는 네이버 대화에 남을 수 있습니다.';
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
@@ -68,7 +68,7 @@ function initPublicInquiry(){
         const talktalkUrl=new URL(CONFIG.talktalk);
         talktalkUrl.searchParams.set('from',talktalkToken);
         talktalkTab.location.replace(talktalkUrl.href);
-        status.textContent='접수 완료! 톡톡 대화창에서 조건을 확인한 뒤 ‘위 조건으로 상담 요청’을 눌러 주세요. 누르면 사무소 톡톡 상담함으로 전달됩니다.';
+        status.textContent='접수 완료! 톡톡 대화창에 작성한 조건이 표시되고 사무소 톡톡 상담함으로 전달됩니다.';
       }else{
         status.textContent='상담 접수가 완료되었습니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다.';
       }

@@ -4,7 +4,7 @@ window.BUJA_CONFIG={
   officePhone:'032-566-8949',
   officeRegistrationNumber:'제28260-2024-00008호',
   kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
-  talktalkUrl:'https://talk.naver.com/ct/w5wbcy',
+  talktalkUrl:'https://talk.naver.com/W5WRV7',
   talktalkBridgeEnabled:true,
   naverUrl:'https://naver.me/F0z9zmWA',
   naverMapsClientId:'gpy2dm1cex',
