@@ -5,6 +5,8 @@
   if (!baseUrl || !publicKey || location.pathname === '/admin.html') return;
 
   try {
+    // The office can exclude its own browsing on each device from the admin screen.
+    if (localStorage.getItem('buja_ignore_visit_stats_v1') === '1') return;
     const storageKey = 'buja_visitor_id_v1';
     let visitorId = localStorage.getItem(storageKey);
     if (!visitorId) {
