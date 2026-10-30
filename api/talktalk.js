@@ -83,7 +83,6 @@ async function sendInquiryToOffice(user, inquiry) {
     body: JSON.stringify({
       event: 'send',
       user,
-      partner: 'w5wrv7',
       textContent: { text: formatInquiry(inquiry) }
     }),
     signal: AbortSignal.timeout(2200)
