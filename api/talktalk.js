@@ -11,7 +11,11 @@ function sameSecret(value, expected) {
 
 function reply(res, status, body) {
   res.setHeader('Cache-Control', 'no-store');
-  return res.status(status).json(body);
+  if (body) {
+    res.setHeader('Content-Type', 'application/json;charset=UTF-8');
+    return res.status(status).json(body);
+  }
+  return res.status(status).end();
 }
 
 async function supabase(path, method = 'GET', body) {
@@ -26,47 +30,99 @@ async function supabase(path, method = 'GET', body) {
       Prefer: 'return=representation'
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
-    signal: AbortSignal.timeout(4500)
+    signal: AbortSignal.timeout(2800)
   });
   const text = await response.text();
   if (!response.ok) throw new Error(`Supabase request failed (${response.status})`);
   return text ? JSON.parse(text) : [];
 }
 
-function formatInquiry(inquiry) {
-  const details = String(inquiry.details || '');
-  const detailsText = `${details.slice(0, 650)}${details.length > 650 ? '…' : ''}`;
-  const lines = [
-    `상담: ${inquiry.request_type}`,
-    `부동산 종류: ${inquiry.property_type || '미입력'}`,
-    `연락처: ${inquiry.phone}`,
-    `성함: ${inquiry.name}`,
-    `희망 지역: ${inquiry.area || '미입력'}`,
-    `요청 내용: ${detailsText}`
-  ];
-  return lines.join('\n').slice(0, 1000);
+function decrypt(row) {
+  const secret = process.env.NAVER_TALKTALK_WEBHOOK_TOKEN;
+  if (!secret) throw new Error('TalkTalk encryption key is not configured');
+  const key = Buffer.from(crypto.hkdfSync('sha256', Buffer.from(secret), Buffer.from('buja-talktalk-pending-v1'), Buffer.from('encrypted-inquiry-payload'), 32));
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(row.payload_iv, 'base64'));
+  decipher.setAuthTag(Buffer.from(row.payload_tag, 'base64'));
+  const text = Buffer.concat([
+    decipher.update(Buffer.from(row.encrypted_payload, 'base64')),
+    decipher.final()
+  ]).toString('utf8');
+  return JSON.parse(text);
 }
 
-async function sendTalkTalkMessage(user, inquiry) {
-  const authorization = process.env.NAVER_TALKTALK_AUTHORIZATION;
-  if (!authorization) throw new Error('TalkTalk send authorization is not configured');
-  const response = await fetch('https://gw.talk.naver.com/chatbot/v1/event', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json;charset=UTF-8', Authorization: authorization },
-    body: JSON.stringify({
-      event: 'send',
-      user,
-      compositeContent: {
-        compositeList: [{
-          title: '홈페이지 상담 접수',
-          description: `${formatInquiry(inquiry)}\n\n접수한 조건을 확인했습니다. 확인 후 톡톡으로 답변드리겠습니다.`.slice(0, 1000)
-        }]
-      }
-    }),
-    signal: AbortSignal.timeout(4500)
+function userHash(user) {
+  return crypto.createHash('sha256').update(user).digest('hex');
+}
+
+function formatInquiry(inquiry) {
+  const details = String(inquiry.details || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').slice(0, 520);
+  return [
+    '상담: ' + inquiry.request_type,
+    '부동산 종류: ' + inquiry.property_type,
+    '성함: ' + inquiry.name,
+    '연락처: ' + inquiry.phone,
+    '희망 지역: ' + (inquiry.area || '미입력'),
+    '요청 내용: ' + details,
+    '',
+    '아래 버튼을 누르면 사무소에 상담 요청이 전달됩니다.'
+  ].join('\n').slice(0, 940);
+}
+
+async function findPending(token) {
+  const rows = await supabase(`talktalk_pending?token=eq.${encodeURIComponent(token)}&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=token,encrypted_payload,payload_iv,payload_tag,status,user_hash`);
+  return rows[0] || null;
+}
+
+async function sendInquiryCard(res, row, token, user) {
+  const fingerprint = userHash(user);
+  if (row.status === 'ready') {
+    const claimed = await supabase(`talktalk_pending?token=eq.${encodeURIComponent(token)}&status=eq.ready&expires_at=gt.${encodeURIComponent(new Date().toISOString())}`, 'PATCH', {
+      status: 'prompted',
+      user_hash: fingerprint
+    });
+    if (!claimed.length) {
+      const refreshed = await findPending(token);
+      if (!refreshed || refreshed.status !== 'prompted' || !sameSecret(refreshed.user_hash, fingerprint)) return reply(res, 200, { success: true });
+      row = refreshed;
+    } else row = claimed[0];
+  } else if (row.status !== 'prompted' || !sameSecret(row.user_hash, fingerprint)) {
+    return reply(res, 200, { success: true });
+  }
+
+  const inquiry = decrypt(row);
+  await supabase(`inquiries?talktalk_token=eq.${encodeURIComponent(token)}&talktalk_consent=eq.true`, 'PATCH', {
+    talktalk_delivery_status: '톡톡 확인 대기'
   });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || result.success === false) throw new Error(`TalkTalk message failed (${response.status})`);
+  return reply(res, 200, {
+    event: 'send',
+    compositeContent: {
+      compositeList: [{
+        title: '홈페이지 상담 접수',
+        description: formatInquiry(inquiry),
+        buttonList: [{
+          type: 'TEXT',
+          data: { title: '위 조건으로 상담 요청', code: token }
+        }]
+      }]
+    }
+  });
+}
+
+async function confirmInquiry(event, res) {
+  const token = String(event.textContent?.code || '');
+  const user = event.user;
+  if (!/^[0-9a-f-]{36}$/i.test(token) || typeof user !== 'string' || user.length > 160 || event.textContent?.inputType !== 'button') {
+    return reply(res, 200, { success: true });
+  }
+  const row = await findPending(token);
+  if (!row || row.status !== 'prompted' || !sameSecret(row.user_hash, userHash(user))) return reply(res, 200, { success: true });
+
+  await supabase(`inquiries?talktalk_token=eq.${encodeURIComponent(token)}&talktalk_consent=eq.true`, 'PATCH', {
+    talktalk_delivery_status: '상담 요청 완료',
+    talktalk_sent_at: new Date().toISOString()
+  });
+  await supabase(`talktalk_pending?token=eq.${encodeURIComponent(token)}`, 'DELETE');
+  return reply(res, 200, { success: true });
 }
 
 module.exports = async function talktalkWebhook(req, res) {
@@ -76,38 +132,25 @@ module.exports = async function talktalkWebhook(req, res) {
     return reply(res, 401, { error: 'Unauthorized' });
   }
 
-  const event = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-  if (event.event === 'test') return reply(res, 200, { success: true });
-  if (event.event !== 'open') return reply(res, 200, { success: true });
-
-  const token = event.options?.from;
-  const user = event.user;
-  if (typeof token !== 'string' || !/^[0-9a-f-]{36}$/i.test(token) || typeof user !== 'string' || user.length > 160) {
-    return reply(res, 200, { success: true });
-  }
-
-  let claimed;
   try {
-    const filter = `talktalk_token=eq.${encodeURIComponent(token)}&consent=eq.true&talktalk_consent=eq.true&talktalk_delivery_status=eq.%EB%8C%80%EA%B8%B0&select=id,request_type,name,phone,property_type,area,details,created_at`;
-    claimed = await supabase(`inquiries?${filter}`, 'PATCH', { talktalk_delivery_status: '전송중' });
-    if (!claimed.length) return reply(res, 200, { success: true });
-    const inquiry = claimed[0];
-    const ageHours = (Date.now() - new Date(inquiry.created_at).getTime()) / 3600000;
-    if (!Number.isFinite(ageHours) || ageHours < 0 || ageHours > 48) {
-      await supabase(`inquiries?id=eq.${encodeURIComponent(inquiry.id)}`, 'PATCH', { talktalk_delivery_status: '만료' });
-      return reply(res, 200, { success: true });
+    const event = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    if (event.event === 'test') return reply(res, 200, { success: true });
+
+    if (event.event === 'open') {
+      const token = event.options?.from;
+      const user = event.user;
+      if (typeof token !== 'string' || !/^[0-9a-f-]{36}$/i.test(token) || typeof user !== 'string' || user.length > 160) {
+        return reply(res, 200, { success: true });
+      }
+      const row = await findPending(token);
+      if (!row) return reply(res, 200, { success: true });
+      return await sendInquiryCard(res, row, token, user);
     }
-    await sendTalkTalkMessage(user, inquiry);
-    await supabase(`inquiries?id=eq.${encodeURIComponent(inquiry.id)}`, 'PATCH', {
-      talktalk_delivery_status: '전송완료',
-      talktalk_sent_at: new Date().toISOString()
-    });
+
+    if (event.event === 'send') return await confirmInquiry(event, res);
     return reply(res, 200, { success: true });
   } catch (error) {
-    if (claimed?.[0]?.id) {
-      await supabase(`inquiries?id=eq.${encodeURIComponent(claimed[0].id)}`, 'PATCH', { talktalk_delivery_status: '대기' }).catch(() => {});
-    }
-    console.error('TalkTalk inquiry delivery failed:', error.message);
-    return reply(res, 500, { error: 'TalkTalk delivery failed' });
+    console.error('TalkTalk inquiry webhook failed:', error.message);
+    return reply(res, 500, { error: 'TalkTalk webhook failed' });
   }
 };

@@ -34,9 +34,7 @@ function initPublicInquiry(){
   const talkConsent=form.elements.talktalk_consent;
   const talkConsentLabel=talkConsent?.closest('.inquiry-consent');
   if(talkConsentLabel)talkConsentLabel.style.display=CONFIG.talktalkBridgeEnabled?'':'none';
-  const updateSubmitLabel=()=>{button.textContent=CONFIG.talktalkBridgeEnabled&&talkConsent?.checked?'접수 후 톡톡 안내':'상담 접수하기'};
-  talkConsent?.addEventListener('change',updateSubmitLabel);
-  updateSubmitLabel();
+  if(talkConsentLabel)talkConsentLabel.querySelector('span').textContent='선택 동의: 작성하신 상담 정보를 암호화해 최대 15분간 임시 보관한 뒤 네이버 톡톡 대화창으로 전달합니다. 대화창에서 ‘위 조건으로 상담 요청’을 누르면 사무소 톡톡 상담함에 요청이 전달됩니다. 톡톡에 전달된 정보는 네이버 대화에 남을 수 있습니다.';
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(!form.reportValidity())return;
@@ -48,25 +46,31 @@ function initPublicInquiry(){
     const validTypes=['매물 접수','찾는 매물','일반 문의'];
     const validProperties=['상가','상가주택','토지','오피스텔','사무실','아파트','기타'];
     if(!validTypes.includes(payload.request_type)||!validProperties.includes(payload.property_type)||payload.name.length<1||payload.name.length>80||payload.phone.length<7||payload.phone.length>30||!/^[0-9+() -]{7,30}$/.test(payload.phone)||payload.details.length<1||payload.details.length>2000||!payload.consent){status.textContent='입력 내용을 확인해 주세요.';status.classList.add('error');return}
-    const talktalkToken=CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent?crypto.randomUUID():null;
-    const talktalkTab=CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent?window.open('about:blank','_blank'):null;
+    const useTalkTalk=CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent;
+    const talktalkToken=useTalkTalk?crypto.randomUUID():null;
+    const talktalkTab=useTalkTalk?window.open('about:blank','_blank'):null;
     if(talktalkTab)talktalkTab.opener=null;
     if(talktalkToken)payload.talktalk_token=talktalkToken;
     button.disabled=true;
     status.classList.remove('error');
     status.textContent='상담 내용을 접수하고 있습니다…';
     try{
+      if(useTalkTalk){
+        if(!talktalkTab)throw new Error('톡톡 연결 창을 열 수 없습니다. 팝업 차단을 해제하고 다시 시도해 주세요.');
+        const prepare=await fetch('/api/talktalk-start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,token:talktalkToken})});
+        if(!prepare.ok)throw new Error('톡톡 임시 접수를 준비하지 못했습니다.');
+      }
       const response=await fetch(`${CONFIG.supabaseUrl.replace(/\/+$/,'')}/rest/v1/inquiries`,{method:'POST',headers:{apikey:CONFIG.supabaseAnonKey,Authorization:`Bearer ${CONFIG.supabaseAnonKey}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
-      if(!response.ok)throw new Error((await response.text()).slice(0,240)||`접수 실패 (${response.status})`);
+      if(!response.ok){if(useTalkTalk)await fetch(`/api/talktalk-start?token=${encodeURIComponent(talktalkToken)}`,{method:'DELETE'}).catch(()=>{});throw new Error((await response.text()).slice(0,240)||`접수 실패 (${response.status})`)}
       window.bujaTrack?.('generate_lead',{request_type:payload.request_type,property_type:payload.property_type});
       form.reset();
-      if(CONFIG.talktalkBridgeEnabled&&payload.talktalk_consent){
+      if(useTalkTalk){
         const talktalkUrl=new URL(CONFIG.talktalk);
         talktalkUrl.searchParams.set('from',talktalkToken);
-        if(talktalkTab)talktalkTab.location.replace(talktalkUrl.href);else window.location.assign(talktalkUrl.href);
-        status.textContent='상담 접수가 완료되었습니다. 톡톡에 연결되면 입력하신 조건의 접수 요약이 안내됩니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다.';
+        talktalkTab.location.replace(talktalkUrl.href);
+        status.textContent='접수 완료! 톡톡 대화창에서 조건을 확인한 뒤 ‘위 조건으로 상담 요청’을 눌러 주세요. 누르면 사무소 톡톡 상담함으로 전달됩니다.';
       }else{
-        status.textContent=payload.talktalk_consent&&!CONFIG.talktalkBridgeEnabled?'상담 접수가 완료되었습니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다. 톡톡 자동 안내는 연결 설정 후 이용할 수 있습니다.':payload.talktalk_consent?'상담 접수가 완료되었습니다. 접수 내용은 관리자 센터와 이메일로 전달됩니다.':'상담 접수가 완료되었습니다. 톡톡 안내 동의가 없어 관리자 센터와 이메일로 접수했습니다.';
+        status.textContent='상담 접수가 완료되었습니다. 사무소 접수 내역은 관리자 센터와 이메일에서 확인할 수 있습니다.';
       }
     }catch(error){
       talktalkTab?.close();
