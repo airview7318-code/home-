@@ -27,14 +27,17 @@ function encrypt(value) {
 async function supabase(path, method = 'GET', body) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error('Supabase server key is not configured');
+  // Supabase's new sb_secret_* keys are API keys, not JWTs. Send them only
+  // through apikey; keep Authorization for legacy service_role JWTs.
+  const headers = {
+    apikey: key,
+    'Content-Type': 'application/json',
+    Prefer: 'return=representation'
+  };
+  if (!key.startsWith('sb_')) headers.Authorization = `Bearer ${key}`;
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method,
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation'
-    },
+    headers,
     ...(body ? { body: JSON.stringify(body) } : {}),
     signal: AbortSignal.timeout(3500)
   });

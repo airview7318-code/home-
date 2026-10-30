@@ -33,7 +33,7 @@ module.exports = async function propertyDetail(req, res) {
       id: `eq.${id}`
     });
     const response = await fetch(endpoint, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      headers: { apikey: key },
       signal: AbortSignal.timeout(7000)
     });
     if (!response.ok) throw new Error(`Supabase returned ${response.status}`);
