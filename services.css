@@ -12,6 +12,6 @@
 .checklist-card summary>b,.checklist-card summary>small{grid-column:2;min-width:0;word-break:keep-all;overflow-wrap:anywhere}
 .checklist-card summary>i{right:18px;bottom:17px}
 .checklist-card>p{margin:0;padding:0 22px 22px 74px}
-#questions .section-heading>.text-link{flex:0 0 auto;margin:0 0 5px;font-size:13px;line-height:1.5;white-space:nowrap}
-@media(max-width:850px){#questions .section-heading{flex-direction:column;align-items:flex-start;gap:10px}#questions .section-heading>.text-link{margin:0;font-size:13px}}
+#questions .section-heading>.text-link{flex:0 0 auto;margin:0 0 5px;font-size:14px;font-weight:600;line-height:1.5;white-space:nowrap}
+@media(max-width:850px){#questions .section-heading{flex-direction:column;align-items:flex-start;gap:10px}#questions .section-heading>.text-link{margin:0;font-size:14px}}
 
