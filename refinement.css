@@ -200,3 +200,9 @@ footer>small{font-size:10px}
 @media(max-width:420px){.commercial-area-copy h3{font-size:18px}.commercial-area-points{grid-template-columns:1fr;font-size:12px}}
 .tool-grid>.calculator-card:only-child{grid-column:1/-1}
 .fee-vat-note{margin-top:-4px;padding:10px 12px;border-left:2px solid #b99b64;background:#f8f6f1;color:#65717d}
+
+/* Keep the complete brand artwork visible and make office facts wrap cleanly. */
+.hero .hero-photo{object-fit:contain;object-position:center;background:#12243a}
+.contact-details p{display:grid;grid-template-columns:80px minmax(0,1fr);gap:0 8px;align-items:start}
+.contact-details p b{width:auto;white-space:nowrap}
+.contact-details p>span{min-width:0;overflow-wrap:anywhere;word-break:keep-all}
