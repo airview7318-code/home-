@@ -3,7 +3,16 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true }
+  ],
   "rewrites": [
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/geomdan-sangga-house-land", "destination": "/geomdan-sangga-house-land.html" },
+    { "source": "/geomdan-e-block-land", "destination": "/geomdan-e-block-land.html" },
+    { "source": "/ara-station-commercial", "destination": "/ara-station-commercial.html" },
+    { "source": "/geomdan-officetel", "destination": "/geomdan-officetel.html" },
+    { "source": "/geomdan-office", "destination": "/geomdan-office.html" },
     { "source": "/property/:id", "destination": "/api/property?id=:id" }
   ],
   "headers": [

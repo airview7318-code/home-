@@ -89,12 +89,12 @@ module.exports = async function propertyDetail(req, res) {
 ${imageMarkup}<h2>매물 정보</h2><div class="guide-checklist">${factsMarkup}</div><h2>상세 안내</h2><p>${escapeHtml(property.description || '추가 상세 조건과 현재 거래 가능 여부는 상담 시 확인해 주세요.')}</p>${sourceMarkup}
 <aside class="guide-notice">가격, 임대 조건, 공개 여부와 거래 가능 상태는 바뀔 수 있습니다. 계약 전 최신 서류와 현장을 확인해 주세요.</aside>
 <div class="guide-cta"><div><b>이 매물에 대해 상담하시겠어요?</b><p>현재 조건과 방문 가능 시간을 전화로 확인해 주세요.</p></div><a href="tel:0325668949">032-566-8949 전화하기</a></div><p><a href="/#listings">← 공개 매물 목록으로</a></p></main>
-<footer class="guide-footer"><b>부자부동산공인중개사사무소</b> · 대표공인중개사 윤민욱<br>인천광역시 검단구 원당동 1043-14 메가타워 101호 · 등록번호 제28260-2024-00008호<br><a href="/">홈페이지</a> · <a href="https://naver.me/F0z9zmWA" target="_blank" rel="noopener noreferrer">네이버 지도</a> · <a href="https://open.kakao.com/o/saJVu9Si" target="_blank" rel="noopener noreferrer">카카오톡 상담</a></footer></body></html>`);
+<footer class="guide-footer"><b>부자부동산공인중개사사무소</b> · 대표공인중개사 윤민욱<br>인천광역시 검단구 발산로 17 메가타워 1층 101호 (원당동 1043-14) · 등록번호 제28260-2024-00008호<br><a href="/">홈페이지</a> · <a href="https://naver.me/F0z9zmWA" target="_blank" rel="noopener noreferrer">네이버 지도</a> · <a href="https://talk.naver.com/ct/w5wbcy" target="_blank" rel="noopener noreferrer">네이버 톡톡 상담</a></footer></body></html>`);
   } catch (error) {
     console.error('Public property detail lookup failed:', error?.message || 'unknown error');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    return res.status(503).send('공개 매물 정보를 일시적으로 불러오지 못했습니다. 전화 또는 카카오톡으로 문의해 주세요.');
+    return res.status(503).send('공개 매물 정보를 일시적으로 불러오지 못했습니다. 전화 또는 네이버 톡톡으로 문의해 주세요.');
   }
 };
 

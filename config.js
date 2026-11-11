@@ -3,7 +3,7 @@ window.BUJA_CONFIG={
   supabaseAnonKey:'sb_publishable_wkP3xEPTNmarPS-RxJi6QA_72pMkXyy',
   officePhone:'032-566-8949',
   officeRegistrationNumber:'제28260-2024-00008호',
-  kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
+  kakaoUrl:'https://talk.naver.com/ct/w5wbcy',
   talktalkUrl:'https://talk.naver.com/ct/w5wbcy',
   talktalkBridgeEnabled:true,
   naverUrl:'https://naver.me/F0z9zmWA',

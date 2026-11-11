@@ -5,7 +5,7 @@ window.BUJA_CONFIG={
   supabaseAnonKey:'YOUR_PUBLIC_ANON_KEY',
   officePhone:'032-566-8949',
   officeRegistrationNumber:'',
-  kakaoUrl:'https://open.kakao.com/o/saJVu9Si',
+  kakaoUrl:'https://talk.naver.com/ct/w5wbcy',
   talktalkUrl:'https://talk.naver.com/ct/w5wbcy',
   talktalkBridgeEnabled:false,
   naverUrl:'https://naver.me/F0z9zmWA',

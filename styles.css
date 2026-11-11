@@ -9,6 +9,32 @@
 @media(max-width:380px){.hero-copy{padding-right:18px;padding-left:18px}.hero-actions .btn{white-space:normal;line-height:1.4;padding:8px;min-height:52px}.hero-actions .btn span{white-space:normal}.trust-strip{padding-right:18px;padding-left:18px}}
 
 .featured-commercial-visual{display:block;background:#12243a}
+.hero .hero-photo{display:block;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;background:none;filter:saturate(.55)}
+.hero h1{font-size:clamp(32px,3.15vw,46px);line-height:1.34;overflow-wrap:normal;word-break:keep-all}
+.office-intro{max-width:1120px;margin:0 auto;padding:30px 24px 20px;color:#526273}
+.office-intro h2{margin:0 0 8px;color:var(--navy);font-size:16px}
+.office-intro p{margin:0;font-size:13px;line-height:1.9}
+.question-card{display:block;min-width:0;overflow:hidden;padding:0}
+.question-card-summary{position:relative;display:grid;grid-template-columns:48px 1fr;grid-template-rows:auto 1fr auto;align-items:center;column-gap:12px;min-height:142px;padding:17px;list-style:none;cursor:pointer}
+.question-card-summary::-webkit-details-marker,.checklist-card summary::-webkit-details-marker{display:none}
+.question-card-summary::marker,.checklist-card summary::marker{content:''}
+.question-card-summary .question-icon{grid-row:1/4}
+.question-card-summary small{color:#768394;font-size:12px}
+.question-card-summary b{align-self:start;font-size:17px;line-height:1.45}
+.question-card-summary>span:last-child{justify-self:end;color:#8b7040;font-size:12px}
+.question-card[open] .question-card-summary>span:last-child{transform:rotate(180deg)}
+.question-answer{padding:0 18px 18px 77px;color:#53677d;font-size:13px;line-height:1.8}
+.question-answer p{margin:0}
+.checklist-card{display:block;min-width:0;text-align:left;cursor:default}
+.checklist-card summary{position:relative;display:grid;grid-template-columns:40px 1fr;grid-template-rows:auto auto;align-content:center;gap:6px 12px;list-style:none;cursor:pointer}
+.checklist-card summary>span{grid-row:1/3}
+.checklist-card summary>i{position:absolute;right:0;bottom:0}
+.checklist-card>p{margin:14px 0 0 50px;color:#53677d;font-size:12px;line-height:1.8}
+.noscript-listings,.noscript-developments{grid-column:1/-1;padding:20px;background:#f7f6f2}
+.noscript-listings .property-card a{display:block}
+.office-address{font-style:normal}
+.hero-visual::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,33,51,.02),rgba(13,33,51,.42));pointer-events:none}
+@media(max-width:850px){.office-intro{padding:22px 25px 8px}.hero h1{font-size:clamp(30px,7vw,40px)}}
 .featured-commercial-visual>img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.8);transition:transform .3s}
 .featured-commercial-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 24%,rgba(10,24,39,.76))}
 .featured-visual-title{position:absolute;z-index:1;left:20px;right:16px;bottom:18px;display:grid;gap:5px;color:#fff}
